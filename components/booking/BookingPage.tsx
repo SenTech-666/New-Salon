@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { ChevronLeft, ChevronRight, Clock, User, Scissors } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { generateTimeSlots, dayOfWeekFromDateString } from '@/lib/scheduling';
 
 type Master = {
   id: string;
@@ -40,11 +41,38 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Шаг сетки времени (минуты), задаётся владельцем салона в настройках.
+  const [slotIntervalMinutes, setSlotIntervalMinutes] = useState(30);
+
+  // Слоты времени, сгенерированные по графику мастера на выбранный день
+  // недели + длительности выбранной услуги. Пустой массив = рабочих часов
+  // на этот день вообще нет (выходной по графику ИЛИ занятие не успевает
+  // закончиться до закрытия).
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
+
+  // Занятость на выбранную дату/мастера: отдельно блокировки по времени,
+  // отдельно — полный день (отпуск/больничный), отдельно — уже занятые
+  // слоты из существующих записей.
+  const [blockedTimeSlots, setBlockedTimeSlots] = useState<Set<string>>(new Set());
+  const [fullDayBlocked, setFullDayBlocked] = useState(false);
+  const [fullDayReason, setFullDayReason] = useState<string | null>(null);
+  const [takenSlots, setTakenSlots] = useState<Set<string>>(new Set());
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
+  // Мастера, которые недоступны на выбранную дату — либо у них весь день
+  // заблокирован (отпуск/больничный), либо по графику в этот день недели
+  // выходной. Такие мастера не показываются в списке выбора мастера.
+  const [unavailableMasterIds, setUnavailableMasterIds] = useState<Set<string>>(new Set());
+  const [loadingMasterAvailability, setLoadingMasterAvailability] = useState(false);
+
+  // Горизонт записи — на сколько дней вперёд клиент может бронировать.
+  // Задаётся владельцем салона в админке (таблица salon_settings).
+  const [bookingHorizonDays, setBookingHorizonDays] = useState(30);
+
   const supabase = createClient();
 
   const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
-  // === ИСПРАВЛЕНИЕ ЗДЕСЬ ===
   useEffect(() => {
     let isMounted = true;
 
@@ -52,9 +80,10 @@ export default function BookingPage() {
       try {
         setLoading(true);
 
-        const [mastersRes, servicesRes] = await Promise.all([
+        const [mastersRes, servicesRes, settingsRes] = await Promise.all([
           supabase.from('masters').select('*').eq('is_active', true).order('name'),
           supabase.from('services').select('*').eq('is_active', true).order('name'),
+          supabase.from('salon_settings').select('booking_horizon_days, slot_interval_minutes').eq('id', 1).single(),
         ]);
 
         if (!isMounted) return;
@@ -70,8 +99,15 @@ export default function BookingPage() {
         setMasters(uniqueMasters);
         setServices(uniqueServices);
 
+        if (settingsRes.data?.booking_horizon_days) {
+          setBookingHorizonDays(settingsRes.data.booking_horizon_days);
+        }
+        if (settingsRes.data?.slot_interval_minutes) {
+          setSlotIntervalMinutes(settingsRes.data.slot_interval_minutes);
+        }
+
       } catch (error: any) {
-        console.error('❌ Ошибка загрузки мастеров:', error);
+        console.error('Ошибка загрузки мастеров:', error);
         toast.error('Не удалось загрузить мастеров');
       } finally {
         if (isMounted) setLoading(false);
@@ -85,7 +121,162 @@ export default function BookingPage() {
     };
   }, [supabase]);
 
-  // === ВСЁ ОСТАЛЬНОЕ (календарь, модалки, функции) БЕЗ ИЗМЕНЕНИЙ ===
+  // При открытии модалки (выбрана дата) подгружаем, какие мастера
+  // недоступны на эту дату — либо полная блокировка (отпуск/больничный),
+  // либо выходной день по их недельному графику.
+  useEffect(() => {
+    if (!isModalOpen || !selectedDate) return;
+
+    let isMounted = true;
+
+    const fetchUnavailableMasters = async () => {
+      setLoadingMasterAvailability(true);
+      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`;
+      const dayOfWeek = dayOfWeekFromDateString(dateStr);
+
+      try {
+        const [blocksRes, hoursRes] = await Promise.all([
+          supabase
+            .from('master_blocks')
+            .select('master_id')
+            .eq('is_full_day', true)
+            .lte('date_from', dateStr)
+            .gte('date_to', dateStr),
+          supabase
+            .from('master_weekly_hours')
+            .select('master_id')
+            .eq('day_of_week', dayOfWeek)
+            .eq('is_day_off', true),
+        ]);
+
+        if (!isMounted) return;
+
+        const unavailable = new Set<string>();
+        (blocksRes.data ?? []).forEach((b: any) => unavailable.add(b.master_id));
+        (hoursRes.data ?? []).forEach((h: any) => unavailable.add(h.master_id));
+
+        setUnavailableMasterIds(unavailable);
+      } catch (error: any) {
+        console.error('Ошибка загрузки доступности мастеров:', error);
+      } finally {
+        if (isMounted) setLoadingMasterAvailability(false);
+      }
+    };
+
+    fetchUnavailableMasters();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isModalOpen, selectedDate, currentMonth, currentYear, supabase]);
+
+  // Подгружаем график мастера на выбранный день недели + занятость
+  // (блокировки по времени и существующие записи), когда доходим до шага
+  // выбора времени — в этот момент уже известны мастер, дата и услуга
+  // (длительность услуги нужна, чтобы не предложить слот, не успевающий
+  // закончиться до закрытия).
+  useEffect(() => {
+    if (currentStep !== 'time' || !selectedMaster || !selectedDate || !selectedService) return;
+
+    let isMounted = true;
+
+    const fetchAvailability = async () => {
+      setLoadingSlots(true);
+      setAvailableTimeSlots([]);
+      setBlockedTimeSlots(new Set());
+      setFullDayBlocked(false);
+      setFullDayReason(null);
+      setTakenSlots(new Set());
+
+      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`;
+      const dayOfWeek = dayOfWeekFromDateString(dateStr);
+      const service = services.find((s) => s.id === selectedService);
+      const serviceDuration = service?.duration ?? 30;
+
+      try {
+        const [hoursRes, blocksRes, bookingsRes] = await Promise.all([
+          supabase
+            .from('master_weekly_hours')
+            .select('*')
+            .eq('master_id', selectedMaster)
+            .eq('day_of_week', dayOfWeek)
+            .maybeSingle(),
+          supabase
+            .from('master_blocks')
+            .select('*')
+            .eq('master_id', selectedMaster)
+            .lte('date_from', dateStr)
+            .gte('date_to', dateStr),
+          supabase
+            .from('bookings')
+            .select('time, status')
+            .eq('master_id', selectedMaster)
+            .eq('date', dateStr)
+            .neq('status', 'cancelled'),
+        ]);
+
+        if (!isMounted) return;
+
+        const schedule = hoursRes.data;
+
+        // Нет графика на этот день вообще или явный выходной — слотов нет.
+        if (!schedule || schedule.is_day_off || !schedule.time_from || !schedule.time_to) {
+          setFullDayBlocked(true);
+          setFullDayReason('Мастер не работает в этот день');
+          setLoadingSlots(false);
+          return;
+        }
+
+        const slots = generateTimeSlots(
+          schedule.time_from,
+          schedule.time_to,
+          slotIntervalMinutes,
+          serviceDuration
+        );
+
+        const blocked = new Set<string>();
+        let isFullDay = false;
+        let reason: string | null = null;
+
+        (blocksRes.data ?? []).forEach((b: any) => {
+          if (b.is_full_day) {
+            isFullDay = true;
+            reason = b.reason ?? 'Выходной';
+            return;
+          }
+          if (b.time_from && b.time_to) {
+            const from = b.time_from.slice(0, 5);
+            const to = b.time_to.slice(0, 5);
+            slots.forEach((slot) => {
+              if (slot >= from && slot < to) blocked.add(slot);
+            });
+          }
+        });
+
+        const taken = new Set<string>(
+          (bookingsRes.data ?? []).map((b: any) => b.time.slice(0, 5))
+        );
+
+        setAvailableTimeSlots(slots);
+        setBlockedTimeSlots(blocked);
+        setFullDayBlocked(isFullDay);
+        setFullDayReason(reason);
+        setTakenSlots(taken);
+      } catch (error: any) {
+        console.error('Ошибка загрузки занятости:', error);
+        toast.error('Не удалось проверить занятость мастера');
+      } finally {
+        if (isMounted) setLoadingSlots(false);
+      }
+    };
+
+    fetchAvailability();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentStep, selectedMaster, selectedDate, selectedService, currentMonth, currentYear, services, slotIntervalMinutes, supabase]);
+
   const getDaysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
   const daysInMonth = getDaysInMonth(currentMonth, currentYear);
 
@@ -96,8 +287,18 @@ export default function BookingPage() {
     return checkDate < today;
   };
 
+  const isBeyondHorizon = (day: number) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const maxDate = new Date(today);
+    maxDate.setDate(maxDate.getDate() + bookingHorizonDays);
+    const checkDate = new Date(currentYear, currentMonth, day);
+    return checkDate > maxDate;
+  };
+
   const getDayStatus = (day: number) => {
     if (isPastDay(day)) return { status: 'past' as const };
+    if (isBeyondHorizon(day)) return { status: 'beyond' as const };
     if (confirmedBookings.includes(day)) return { status: 'confirmed' as const };
     return { status: 'free' as const };
   };
@@ -123,7 +324,7 @@ export default function BookingPage() {
   };
 
   const handleDayClick = (day: number) => {
-    if (isPastDay(day)) return;
+    if (isPastDay(day) || isBeyondHorizon(day)) return;
     setSelectedDate(day);
     setCurrentStep('masters');
     setSelectedMaster('');
@@ -145,6 +346,7 @@ export default function BookingPage() {
   };
 
   const handleTimeSelect = (time: string) => {
+    if (blockedTimeSlots.has(time) || takenSlots.has(time) || fullDayBlocked) return;
     setSelectedTime(time);
     setCurrentStep('client');
   };
@@ -251,13 +453,14 @@ export default function BookingPage() {
                     key={day}
                     onClick={() => handleDayClick(day)}
                     className={`aspect-square rounded-3xl border flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95 hover:shadow-xl bg-white
-                      ${status === 'past' ? 'opacity-40 cursor-not-allowed' : 'hover:border-slate-200'}
+                      ${status === 'past' || status === 'beyond' ? 'opacity-40 cursor-not-allowed' : 'hover:border-slate-200'}
                       ${isSelected ? 'border-[#c9a08a] shadow-lg scale-[1.02]' : 'border-slate-100'}
                     `}
                   >
                     <span className="text-3xl sm:text-4xl font-semibold text-slate-800">{day}</span>
                     <span className="hidden sm:block text-[10px] font-medium mt-1 tracking-wide">
                       {status === 'past' && <span className="text-slate-400">Прошёл</span>}
+                      {status === 'beyond' && <span className="text-slate-400">Недоступно</span>}
                       {status === 'confirmed' && <span className="text-[#c9a08a] font-semibold">Ваша</span>}
                       {status === 'free' && <span className="text-emerald-600">Свободно</span>}
                     </span>
@@ -297,19 +500,37 @@ export default function BookingPage() {
                     </div>
                     <h3 className="text-2xl font-semibold text-slate-900">Выберите мастера</h3>
                   </div>
-                  <div className="space-y-4">
-                    {masters.map((master) => (
-                      <div
-                        key={master.id}
-                        onClick={() => handleMasterSelect(master.id)}
-                        className={`p-6 rounded-3xl border-2 transition-all cursor-pointer hover:shadow-xl bg-white
-                          ${selectedMaster === master.id ? 'border-[#c9a08a] bg-[#c9a08a]/5 shadow' : 'border-slate-100 hover:border-slate-200'}`}
-                      >
-                        <p className="font-semibold text-xl">{master.name}</p>
-                        <p className="text-slate-500 mt-1">{master.specialty}</p>
-                      </div>
-                    ))}
-                  </div>
+
+                  {loadingMasterAvailability ? (
+                    <p className="text-center text-slate-400 py-8">Проверяем доступность мастеров...</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {masters
+                        .filter((master) => !unavailableMasterIds.has(master.id))
+                        .map((master) => (
+                          <div
+                            key={master.id}
+                            onClick={() => handleMasterSelect(master.id)}
+                            className={`p-6 rounded-3xl border-2 transition-all cursor-pointer hover:shadow-xl bg-white
+                              ${selectedMaster === master.id ? 'border-[#c9a08a] bg-[#c9a08a]/5 shadow' : 'border-slate-100 hover:border-slate-200'}`}
+                          >
+                            <p className="font-semibold text-xl">{master.name}</p>
+                            <p className="text-slate-500 mt-1">{master.specialty}</p>
+                          </div>
+                        ))}
+
+                      {masters.filter((m) => !unavailableMasterIds.has(m.id)).length === 0 && (
+                        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 text-center">
+                          <p className="text-amber-700 font-medium">
+                            В этот день никто из мастеров не работает
+                          </p>
+                          <p className="text-slate-500 text-sm mt-2">
+                            Выберите другую дату
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -350,20 +571,45 @@ export default function BookingPage() {
                     </div>
                     <h3 className="text-2xl font-semibold text-slate-900">Выберите время</h3>
                   </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                    {['10:00', '11:00', '12:30', '14:00', '15:30', '17:00', '18:30', '19:30'].map((time) => (
-                      <Button
-                        key={time}
-                        variant={selectedTime === time ? "default" : "outline"}
-                        onClick={() => handleTimeSelect(time)}
-                        className={`h-16 text-base font-medium rounded-2xl transition-all ${
-                          selectedTime === time ? 'bg-[#c9a08a] hover:bg-[#b38f79]' : ''
-                        }`}
-                      >
-                        {time}
-                      </Button>
-                    ))}
-                  </div>
+
+                  {loadingSlots ? (
+                    <p className="text-center text-slate-400 py-8">Проверяем занятость мастера...</p>
+                  ) : fullDayBlocked || availableTimeSlots.length === 0 ? (
+                    <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 text-center">
+                      <p className="text-amber-700 font-medium">
+                        Мастер не работает в этот день
+                      </p>
+                      {fullDayReason && (
+                        <p className="text-amber-600 text-sm mt-1">{fullDayReason}</p>
+                      )}
+                      <p className="text-slate-500 text-sm mt-3">
+                        Выберите другую дату или мастера
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                      {availableTimeSlots.map((time) => {
+                        const isUnavailable = blockedTimeSlots.has(time) || takenSlots.has(time);
+                        return (
+                          <Button
+                            key={time}
+                            variant={selectedTime === time ? "default" : "outline"}
+                            onClick={() => handleTimeSelect(time)}
+                            disabled={isUnavailable}
+                            className={`h-16 text-base font-medium rounded-2xl transition-all ${
+                              selectedTime === time ? 'bg-[#c9a08a] hover:bg-[#b38f79]' : ''
+                            } ${
+                              isUnavailable
+                                ? 'cursor-not-allowed border-red-200 bg-red-100 text-red-300 hover:bg-red-100 hover:text-red-300'
+                                : ''
+                            }`}
+                          >
+                            {time}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -397,7 +643,7 @@ export default function BookingPage() {
                     </div>
                   </div>
 
-                  <Button 
+                  <Button
                     onClick={handleConfirmBooking}
                     disabled={isSubmitting || !clientName.trim() || !clientPhone.trim()}
                     className="w-full h-16 text-xl font-semibold rounded-3xl bg-[#c9a08a] hover:bg-[#b38f79] shadow-xl transition-all active:scale-[0.985]"

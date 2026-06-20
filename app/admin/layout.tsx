@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { 
   LayoutDashboard, Users, Scissors, Calendar, 
-  BarChart2, History, PackageOpen, LogOut 
+  BarChart2, History, PackageOpen, LogOut, CalendarOff, Settings
 } from 'lucide-react';
 
 const nav = [
@@ -13,7 +13,9 @@ const nav = [
   { href: '/admin/services', label: 'Услуги', icon: Scissors },
   { href: '/admin/stats', label: 'Статистика', icon: BarChart2 },
   { href: '/admin/history', label: 'История', icon: History },
+  { href: '/admin/blocks', label: 'Расписание', icon: CalendarOff },
   { href: '/admin/inventory', label: 'Учёт', icon: PackageOpen },
+  { href: '/admin/settings', label: 'Настройки', icon: Settings },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
