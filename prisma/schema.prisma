@@ -1,4 +1,3 @@
-// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,68 +6,17 @@ datasource db {
   provider = "postgresql"
 }
 
-// ====================== МОДЕЛИ ======================
-
-model Service {
-  id          String   @id @default(cuid())
-  name        String
-  duration    Int
-  price       Int
-  description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  bookings    Booking[]
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model Master {
-  id          String   @id @default(cuid())
-  name        String
-  specialty   String?
-  photo       String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  bookings      Booking[]
-  availabilities Availability[]
-}
-
-model Booking {
-  id            String        @id @default(cuid())
-  date          DateTime
-  time          String
-  clientName    String
-  clientPhone   String
-  clientComment String?
-  status        BookingStatus @default(PENDING)
-
-  serviceId     String
-  masterId      String
-
-  service       Service       @relation(fields: [serviceId], references: [id])
-  master        Master        @relation(fields: [masterId], references: [id])
-
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-}
-
-model Availability {
-  id        String @id @default(cuid())
-  masterId  String
-  dayOfWeek Int
-  startTime String
-  endTime   String
-
-  master    Master @relation(fields: [masterId], references: [id])
-
-  @@unique([masterId, dayOfWeek])
-}
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  COMPLETED
+enum Role {
+  USER
+  ADMIN
+  OWNER
 }

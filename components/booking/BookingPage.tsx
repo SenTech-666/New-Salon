@@ -44,55 +44,48 @@ export default function BookingPage() {
 
   const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
-  // Загрузка мастеров и услуг
-useEffect(() => {
-  let isMounted = true;
+  // === ИСПРАВЛЕНИЕ ЗДЕСЬ ===
+  useEffect(() => {
+    let isMounted = true;
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      console.log('🔄 Начинаем загрузку мастеров и услуг...');
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-      const [mastersRes, servicesRes] = await Promise.all([
-        supabase.from('masters').select('*').eq('is_active', true).order('name'),
-        supabase.from('services').select('*').eq('is_active', true).order('name'),
-      ]);
+        const [mastersRes, servicesRes] = await Promise.all([
+          supabase.from('masters').select('*').eq('is_active', true).order('name'),
+          supabase.from('services').select('*').eq('is_active', true).order('name'),
+        ]);
 
-      console.log('📥 mastersRes:', mastersRes);
-      console.log('📥 servicesRes:', servicesRes);
+        if (!isMounted) return;
 
-      if (!isMounted) return;
+        const uniqueMasters = mastersRes.data
+          ? Array.from(new Map(mastersRes.data.map((item: Master) => [item.id, item]))).map(([, v]) => v)
+          : [];
 
-      // Убираем дубли по id
-      const uniqueMasters = mastersRes.data 
-        ? Array.from(new Map(mastersRes.data.map((item: any) => [item.id, item])).values())
-        : [];
+        const uniqueServices = servicesRes.data
+          ? Array.from(new Map(servicesRes.data.map((item: Service) => [item.id, item]))).map(([, v]) => v)
+          : [];
 
-      const uniqueServices = servicesRes.data 
-        ? Array.from(new Map(servicesRes.data.map((item: any) => [item.id, item])).values())
-        : [];
+        setMasters(uniqueMasters);
+        setServices(uniqueServices);
 
-      console.log('✅ Уникальных мастеров после обработки:', uniqueMasters.length);
-      console.log('✅ Уникальных услуг после обработки:', uniqueServices.length);
+      } catch (error: any) {
+        console.error('❌ Ошибка загрузки мастеров:', error);
+        toast.error('Не удалось загрузить мастеров');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
 
-      setMasters(uniqueMasters);
-      setServices(uniqueServices);
+    fetchData();
 
-    } catch (error) {
-      console.error('❌ Ошибка загрузки:', error);
-      toast.error('Не удалось загрузить данные');
-    } finally {
-      if (isMounted) setLoading(false);
-    }
-  };
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
 
-  fetchData();
-
-  return () => {
-    isMounted = false;
-  };
-}, [supabase]);
-
+  // === ВСЁ ОСТАЛЬНОЕ (календарь, модалки, функции) БЕЗ ИЗМЕНЕНИЙ ===
   const getDaysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
   const daysInMonth = getDaysInMonth(currentMonth, currentYear);
 
@@ -131,7 +124,6 @@ useEffect(() => {
 
   const handleDayClick = (day: number) => {
     if (isPastDay(day)) return;
-
     setSelectedDate(day);
     setCurrentStep('masters');
     setSelectedMaster('');
@@ -199,7 +191,6 @@ useEffect(() => {
         duration: 6000,
       });
 
-      // Сброс
       setSelectedMaster('');
       setSelectedService('');
       setSelectedTime('');
@@ -228,9 +219,7 @@ useEffect(() => {
 
       <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
         <div className="text-center pt-12 pb-10">
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tighter text-slate-900 mb-3">
-            Онлайн-запись
-          </h1>
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tighter text-slate-900 mb-3">Онлайн-запись</h1>
           <p className="text-xl text-slate-600">Выберите удобный день и время</p>
         </div>
 
@@ -280,7 +269,6 @@ useEffect(() => {
         </Card>
       </div>
 
-      {/* Модалка */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-lg w-[95%] max-h-[92vh] overflow-hidden rounded-3xl p-0 bg-[#fdf7f0] border border-[#c9a08a]/20 flex flex-col">
           <DialogHeader className="sticky top-0 bg-[#fdf7f0]/95 backdrop-blur-lg z-10 border-b border-[#c9a08a]/10 px-6 py-5 flex flex-row items-center gap-3 shrink-0">
@@ -301,7 +289,6 @@ useEffect(() => {
 
           <div className="flex-1 overflow-y-auto modal-scrollbar p-6 sm:p-8">
             <div className="space-y-10">
-              {/* Мастера */}
               {currentStep === 'masters' && (
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
@@ -326,7 +313,6 @@ useEffect(() => {
                 </div>
               )}
 
-              {/* Услуги */}
               {currentStep === 'services' && (
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
@@ -356,7 +342,6 @@ useEffect(() => {
                 </div>
               )}
 
-              {/* Время */}
               {currentStep === 'time' && (
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
@@ -382,7 +367,6 @@ useEffect(() => {
                 </div>
               )}
 
-              {/* Данные клиента */}
               {currentStep === 'client' && (
                 <div className="space-y-8">
                   <div className="flex items-center gap-3">
