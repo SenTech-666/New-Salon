@@ -6,6 +6,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  ADMIN
+  OWNER
+}
+
 model User {
   id        String   @id @default(cuid())
   name      String?
@@ -13,10 +19,52 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  masters   Master[]
 }
 
-enum Role {
-  USER
-  ADMIN
-  OWNER
+model Master {
+  id        String   @id @default(cuid())
+  name      String
+  specialty String?
+  is_active Boolean  @default(true)
+  photo     String?  @default("https://via.placeholder.com/150")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  services  Service[]
+  bookings  Booking[]
+}
+
+model Service {
+  id        String   @id @default(cuid())
+  name      String
+  duration  Int
+  price     Int
+  is_active Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  masterId  String
+  master    Master   @relation(fields: [masterId], references: [id], onDelete: Cascade)
+
+  bookings  Booking[]
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  date        DateTime
+  time        String
+  masterId    String
+  serviceId   String
+  clientName  String
+  clientPhone String
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+
+  master      Master   @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 }

@@ -1,33 +1,32 @@
-import { prisma } from '@/lib/prisma';
-import { DataTable } from '@/components/ui/data-table';
-import { Button } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { Plus } from 'lucide-react';
+import MastersTable from '@/components/admin/MastersTable';
 
-type Column = {
-  accessorKey: string;
-  header: string;
-};
-
-export default async function AdminMasters() {
-  const masters = await prisma.master.findMany({
-    orderBy: { name: 'asc' },
-  });
-
-  const columns: Column[] = [
-    { accessorKey: 'name', header: 'Имя' },
-    { accessorKey: 'specialty', header: 'Специальность' },
-    { accessorKey: 'is_active', header: 'Активен' },
-  ];
+export default async function AdminMastersPage() {
+  const supabase = await createClient();
+  const { data: masters } = await supabase
+    .from('masters')
+    .select('*, services(count)')
+    .order('name');
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Мастера</h1>
-        <Button asChild>
-          <Link href="/admin/masters/new">Добавить мастера</Link>
-        </Button>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Мастера</h1>
+          <p className="text-slate-500 mt-1">{masters?.length ?? 0} мастеров</p>
+        </div>
+        <Link
+          href="/admin/masters/new"
+          className="flex items-center gap-2 bg-[#c9a08a] hover:bg-[#b38f79] text-white px-5 py-2.5 rounded-2xl text-sm font-medium transition-all"
+        >
+          <Plus className="w-4 h-4" />
+          Добавить мастера
+        </Link>
       </div>
-      <DataTable data={masters} columns={columns} />
+
+      <MastersTable masters={masters ?? []} />
     </div>
   );
 }

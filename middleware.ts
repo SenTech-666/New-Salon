@@ -1,44 +1,33 @@
 // middleware.ts
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request,
-  })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value)
-            response = NextResponse.next({
-              request,
-            })
-            response.cookies.set(name, value, options)
-          })
-        },
-      },
+const isProtectedRoute = createRouteMatcher([
+  '/admin(.*)',
+  '/master(.*)',
+  '/owner(.*)',
+]);
+
+export default clerkMiddleware(async (auth, req) => {
+  const { userId } = await auth();
+
+  if (isProtectedRoute(req)) {
+    if (!userId) {
+      const redirectUrl = new URL('/sign-in', req.url);
+      redirectUrl.searchParams.set('redirect_url', req.url);
+      return NextResponse.redirect(redirectUrl);
     }
-  )
-
-  const { data: { session } } = await supabase.auth.getSession()
-
-  // Защита маршрутов
-  if (request.nextUrl.pathname.startsWith('/master') && !session) {
-    return NextResponse.redirect(new URL('/auth/login?type=master', request.url))
+    // TODO: позже добавим проверку роли (OWNER/ADMIN) через Clerk metadata
   }
 
-  return response
-}
+  return NextResponse.next();
+});
 
 export const config = {
-  matcher: ['/master/:path*', '/owner/:path*'],
-}
+  matcher: [
+    '/((?!.+\\.[\\w]+$|_next).*)', // Не трогаем статику
+    '/',
+    '/(api|trpc)(.*)',
+  ],
+};

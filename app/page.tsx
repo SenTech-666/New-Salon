@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Award, Shield, Sparkles, Clock, Star } from 'lucide-react';
 import AnimatedHero from '@/components/ui/animated-hero';
+import { SignUp } from '@clerk/nextjs'
+
+
 
 export default function Home() {
   const jsonLd = {
@@ -109,7 +112,7 @@ export default function Home() {
 
       <footer className="bg-slate-900 text-slate-400 py-12 text-center border-t border-slate-800">
         <p className="mb-3">© 2026 Василики • Премиум маникюр Москва</p>
-        <Link href="/master/login" className="text-sm hover:text-white transition-colors">
+        <Link href="/admin" className="text-sm hover:text-white transition-colors">
           Кабинет мастера →
         </Link>
       </footer>
