@@ -5,6 +5,15 @@ import { useSupabaseClient } from '@/lib/supabase/useSupabaseClient';
 import { toast } from 'sonner';
 import ScheduleGrid from '@/components/admin/ScheduleGrid';
 import { DaySchedule, defaultWeeklyTemplate } from '@/lib/scheduling';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { UserPlus, Copy, Check, Trash2 } from 'lucide-react';
+
+type TeamMember = {
+  id: string;
+  clerk_user_id: string;
+  role: string;
+  created_at: string;
+};
 
 export default function SettingsForm({
   initialHorizonDays,
@@ -22,6 +31,12 @@ export default function SettingsForm({
   const [applying, setApplying] = useState(false);
   const [mastersCount, setMastersCount] = useState<number | null>(null);
 
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(true);
+  const [generatingInvite, setGeneratingInvite] = useState(false);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     if (!supabase) return;
     supabase
@@ -30,6 +45,22 @@ export default function SettingsForm({
       .eq('is_active', true)
       .then(({ count }) => setMastersCount(count ?? 0));
   }, [supabase]);
+
+  useEffect(() => {
+    if (!supabase) return;
+    loadTeam();
+  }, [supabase]);
+
+  const loadTeam = async () => {
+    if (!supabase) return;
+    setLoadingTeam(true);
+    const { data } = await supabase
+      .from('salon_members')
+      .select('id, clerk_user_id, role, created_at')
+      .order('created_at');
+    setTeam(data ?? []);
+    setLoadingTeam(false);
+  };
 
   const handleSaveGeneral = async () => {
     if (!supabase) {
@@ -46,9 +77,6 @@ export default function SettingsForm({
     }
 
     setSavingGeneral(true);
-    // Настройки теперь хранятся в salons (одна строка на салон), а не в
-    // старой salon_settings (id=1 на всех). Без .eq() — RLS сам найдёт
-    // именно строку текущего владельца через salons_update.
     const { error } = await supabase
       .from('salons')
       .update({ booking_horizon_days: horizonDays, slot_interval_minutes: slotInterval });
@@ -102,6 +130,51 @@ export default function SettingsForm({
       setApplying(false);
     }
   };
+
+  const generateManagerInvite = async () => {
+    if (!supabase) return;
+    setGeneratingInvite(true);
+    try {
+      const { data, error } = await supabase
+        .from('master_invites')
+        .insert({ role: 'manager' })
+        .select('token')
+        .single();
+
+      if (error || !data) {
+        toast.error('Ошибка создания приглашения: ' + (error?.message ?? ''));
+        return;
+      }
+
+      setInviteLink(`${window.location.origin}/master/invite/${data.token}`);
+      setCopied(false);
+    } finally {
+      setGeneratingInvite(false);
+    }
+  };
+
+  const copyLink = () => {
+    if (!inviteLink) return;
+    navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    toast.success('Ссылка скопирована');
+  };
+
+  const removeMember = async (id: string) => {
+    if (!supabase) return;
+    if (!confirm('Убрать этого человека из команды? Доступ к админке будет потерян.')) return;
+
+    const { error } = await supabase.from('salon_members').delete().eq('id', id);
+    if (error) {
+      toast.error('Ошибка: ' + error.message);
+    } else {
+      toast.success('Удалено из команды');
+      loadTeam();
+    }
+  };
+
+  const roleLabel = (role: string) =>
+    role === 'owner' ? 'Владелец' : role === 'manager' ? 'Менеджер' : 'Мастер';
 
   return (
     <div className="space-y-8 max-w-2xl">
@@ -177,6 +250,74 @@ export default function SettingsForm({
           {applying ? 'Применяем...' : 'Применить ко всем мастерам'}
         </button>
       </div>
+
+      <div className="bg-white rounded-3xl border border-slate-100 p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-1">Команда</h2>
+        <p className="text-sm text-slate-500 mb-6">
+          Менеджеры видят записи, мастеров и услуги так же, как вы, но не
+          могут менять настройки салона
+        </p>
+
+        {loadingTeam ? (
+          <p className="text-sm text-slate-400 py-4">Загрузка...</p>
+        ) : (
+          <div className="space-y-2 mb-6">
+            {team.map((m) => (
+              <div
+                key={m.id}
+                className="flex items-center justify-between px-4 py-3 rounded-2xl bg-slate-50"
+              >
+                <div>
+                  <p className="text-sm font-medium text-slate-800">{roleLabel(m.role)}</p>
+                  <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[280px]">{m.clerk_user_id}</p>
+                </div>
+                {m.role !== 'owner' && (
+                  <button
+                    onClick={() => removeMember(m.id)}
+                    title="Убрать из команды"
+                    className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={generateManagerInvite}
+          disabled={generatingInvite || !supabase}
+          className="w-full h-11 rounded-2xl border border-[#c9a08a] text-[#c9a08a] hover:bg-[#fdf7f0] text-sm font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          <UserPlus className="w-4 h-4" />
+          {generatingInvite ? 'Создаём...' : 'Пригласить менеджера'}
+        </button>
+      </div>
+
+      <Dialog open={!!inviteLink} onOpenChange={(open) => !open && setInviteLink(null)}>
+        <DialogContent className="max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>Приглашение менеджера</DialogTitle>
+            <DialogDescription>
+              Отправьте эту ссылку. Она действует 7 дней и одноразовая.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-2 bg-slate-50 rounded-2xl p-3 mt-2">
+            <input
+              readOnly
+              value={inviteLink ?? ''}
+              className="flex-1 bg-transparent text-sm text-slate-600 outline-none truncate"
+            />
+            <button
+              onClick={copyLink}
+              className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-[#c9a08a] transition-all shrink-0"
+            >
+              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

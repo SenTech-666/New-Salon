@@ -2,7 +2,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-
 const isProtectedRoute = createRouteMatcher([
   '/admin(.*)',
   '/master(.*)',
@@ -18,7 +17,9 @@ export default clerkMiddleware(async (auth, req) => {
       redirectUrl.searchParams.set('redirect_url', req.url);
       return NextResponse.redirect(redirectUrl);
     }
-    // TODO: позже добавим проверку роли (OWNER/ADMIN) через Clerk metadata
+    // Точную роль middleware не знает (это требует похода в БД, что
+    // в middleware дороже) — middleware просто отсекает неавторизованных.
+    // Финальная проверка роли — на уровне RLS и в самих страницах/layout'ах.
   }
 
   return NextResponse.next();

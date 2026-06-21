@@ -41,6 +41,17 @@ type BlockRow = {
   reason: string | null;
 };
 
+type SalonInfo = {
+  id: string;
+  name: string;
+  description: string | null;
+  address: string | null;
+  phone: string | null;
+  photo_url: string | null;
+  booking_horizon_days: number;
+  slot_interval_minutes: number;
+};
+
 // Один анонимный клиент на модуль (не на каждый рендер) — устраняет
 // предупреждение "Multiple GoTrueClient instances detected".
 const supabase = createClient();
@@ -69,6 +80,7 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
   // RLS-переменные сессии (это не работает между отдельными HTTP-запросами
   // анонимного клиента — проверено через документацию PostgREST).
   const [salonId, setSalonId] = useState<string | null>(null);
+  const [salonInfo, setSalonInfo] = useState<SalonInfo | null>(null);
   const [bookingHorizonDays, setBookingHorizonDays] = useState(30);
   const [slotIntervalMinutes, setSlotIntervalMinutes] = useState(30);
 
@@ -105,6 +117,7 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
         }
 
         setSalonId(salon.id);
+        setSalonInfo(salon);
         setBookingHorizonDays(salon.booking_horizon_days ?? 30);
         setSlotIntervalMinutes(salon.slot_interval_minutes ?? 30);
 
@@ -450,9 +463,52 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
       <div className="absolute bottom-20 right-10 w-80 h-80 bg-[#c9a08a]/5 rounded-full blur-3xl -z-10" />
 
       <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
-        <div className="text-center pt-12 pb-10">
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tighter text-slate-900 mb-3">Онлайн-запись</h1>
-          <p className="text-xl text-slate-600">Выберите удобный день и время</p>
+        <div className="pt-12 pb-10">
+          <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
+            {salonInfo?.photo_url ? (
+              <img
+                src={salonInfo.photo_url}
+                alt={salonInfo.name}
+                className="w-20 h-20 rounded-2xl object-cover shadow-md flex-shrink-0"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-[#c9a08a]/15 flex items-center justify-center flex-shrink-0">
+                <span className="text-3xl font-bold text-[#c9a08a]">
+                  {salonInfo?.name?.[0] ?? '?'}
+                </span>
+              </div>
+            )}
+            <div className="text-center sm:text-left">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-slate-900">
+                {salonInfo?.name ?? 'Онлайн-запись'}
+              </h1>
+              {salonInfo?.description && (
+                <p className="text-slate-500 mt-1 text-lg">{salonInfo.description}</p>
+              )}
+              <div className="flex flex-wrap gap-4 mt-2 justify-center sm:justify-start">
+                {salonInfo?.address && (
+                  <span className="text-sm text-slate-400 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                    </svg>
+                    {salonInfo.address}
+                  </span>
+                )}
+                {salonInfo?.phone && (
+                  <a
+                    href={`tel:${salonInfo.phone}`}
+                    className="text-sm text-[#c9a08a] flex items-center gap-1 hover:text-[#b38f79] transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 6.75z" />
+                    </svg>
+                    {salonInfo.phone}
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-xl overflow-hidden">

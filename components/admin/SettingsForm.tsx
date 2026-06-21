@@ -18,9 +18,49 @@ export default function SettingsForm({
   const [slotInterval, setSlotInterval] = useState(initialSlotInterval);
   const [savingGeneral, setSavingGeneral] = useState(false);
 
+  const [salonName, setSalonName] = useState('');
+  const [salonDescription, setSalonDescription] = useState('');
+  const [salonAddress, setSalonAddress] = useState('');
+  const [salonPhone, setSalonPhone] = useState('');
+  const [salonPhotoUrl, setSalonPhotoUrl] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
+
   const [template, setTemplate] = useState<DaySchedule[]>(defaultWeeklyTemplate());
   const [applying, setApplying] = useState(false);
   const [mastersCount, setMastersCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase
+      .from('salons')
+      .select('name, description, address, phone, photo_url')
+      .single()
+      .then(({ data }) => {
+        if (!data) return;
+        setSalonName(data.name ?? '');
+        setSalonDescription(data.description ?? '');
+        setSalonAddress(data.address ?? '');
+        setSalonPhone(data.phone ?? '');
+        setSalonPhotoUrl(data.photo_url ?? '');
+      });
+  }, [supabase]);
+
+  const handleSaveProfile = async () => {
+    if (!supabase) return;
+    setSavingProfile(true);
+    const { error } = await supabase
+      .from('salons')
+      .update({
+        name: salonName.trim(),
+        description: salonDescription.trim() || null,
+        address: salonAddress.trim() || null,
+        phone: salonPhone.trim() || null,
+        photo_url: salonPhotoUrl.trim() || null,
+      });
+    if (error) toast.error('Ошибка: ' + error.message);
+    else toast.success('Профиль сохранён');
+    setSavingProfile(false);
+  };
 
   useEffect(() => {
     if (!supabase) return;
@@ -105,6 +145,78 @@ export default function SettingsForm({
 
   return (
     <div className="space-y-8 max-w-2xl">
+      <div className="bg-white rounded-3xl border border-slate-100 p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-1">Профиль салона</h2>
+        <p className="text-sm text-slate-500 mb-6">
+          Отображается на публичной странице записи
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-slate-700 mb-2 block">Название</label>
+            <input
+              value={salonName}
+              onChange={(e) => setSalonName(e.target.value)}
+              placeholder="Салон красоты «Лаванда»"
+              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700 mb-2 block">Описание</label>
+            <textarea
+              value={salonDescription}
+              onChange={(e) => setSalonDescription(e.target.value)}
+              placeholder="Пара слов о салоне — стиль, атмосфера, специализация"
+              rows={3}
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a] resize-none"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700 mb-2 block">Адрес</label>
+            <input
+              value={salonAddress}
+              onChange={(e) => setSalonAddress(e.target.value)}
+              placeholder="ул. Пушкина, д. 10, Москва"
+              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700 mb-2 block">Телефон</label>
+            <input
+              value={salonPhone}
+              onChange={(e) => setSalonPhone(e.target.value)}
+              placeholder="+7 (999) 123-45-67"
+              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700 mb-2 block">Фото (URL)</label>
+            <input
+              value={salonPhotoUrl}
+              onChange={(e) => setSalonPhotoUrl(e.target.value)}
+              placeholder="https://..."
+              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+            />
+            {salonPhotoUrl && (
+              <img
+                src={salonPhotoUrl}
+                alt="preview"
+                className="mt-3 w-20 h-20 rounded-2xl object-cover border border-slate-100"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
+            )}
+          </div>
+        </div>
+
+        <button
+          onClick={handleSaveProfile}
+          disabled={savingProfile || !supabase}
+          className="w-full h-11 mt-6 rounded-2xl bg-[#c9a08a] hover:bg-[#b38f79] text-white text-sm font-medium transition-all disabled:opacity-50"
+        >
+          {savingProfile ? 'Сохраняем...' : 'Сохранить профиль'}
+        </button>
+      </div>
+
       <div className="bg-white rounded-3xl border border-slate-100 p-6">
         <h2 className="text-lg font-semibold text-slate-900 mb-1">Запись клиентов</h2>
         <p className="text-sm text-slate-500 mb-6">
