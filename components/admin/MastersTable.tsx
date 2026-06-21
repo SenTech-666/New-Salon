@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/useSupabaseClient';
 import { toast } from 'sonner';
 import { Pencil, Power } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -17,10 +17,11 @@ type Master = {
 
 export default function MastersTable({ masters }: { masters: Master[] }) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useSupabaseClient();
   const [loading, setLoading] = useState<string | null>(null);
 
   const toggleActive = async (id: string, current: boolean) => {
+    if (!supabase) return;
     setLoading(id);
     const { error } = await supabase
       .from('masters')
@@ -84,7 +85,7 @@ export default function MastersTable({ masters }: { masters: Master[] }) {
 
             <button
               onClick={() => toggleActive(m.id, m.is_active)}
-              disabled={loading === m.id}
+              disabled={loading === m.id || !supabase}
               title={m.is_active ? 'Деактивировать' : 'Активировать'}
               className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
                 m.is_active

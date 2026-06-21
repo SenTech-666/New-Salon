@@ -1,42 +1,46 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSupabaseClient } from '@/lib/supabase/useSupabaseClient';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import ServiceConsumablesEditor from '@/components/admin/ServiceConsumablesEditor';
 
 type Master = { id: string; name: string };
+type InventoryItem = { id: string; name: string; unit: string };
+type Consumable = { id: string; item_id: string; amount: number };
 
-export default function NewServicePage() {
+type Service = {
+  id: string;
+  name: string;
+  duration: number;
+  price: number;
+  master_id: string | null;
+  is_active: boolean;
+};
+
+export default function ServiceEditForm({
+  service,
+  masters,
+  inventoryItems,
+  initialConsumables,
+}: {
+  service: Service;
+  masters: Master[];
+  inventoryItems: InventoryItem[];
+  initialConsumables: Consumable[];
+}) {
   const router = useRouter();
   const supabase = useSupabaseClient();
   const [loading, setLoading] = useState(false);
-  const [masters, setMasters] = useState<Master[]>([]);
   const [form, setForm] = useState({
-    name: '',
-    duration: 30,
-    price: 1000,
-    master_id: '',
-    is_active: true,
+    name: service.name,
+    duration: service.duration,
+    price: service.price,
+    master_id: service.master_id ?? '',
+    is_active: service.is_active,
   });
-
-  useEffect(() => {
-    if (!supabase) return;
-    let isMounted = true;
-    supabase
-      .from('masters')
-      .select('id, name')
-      .eq('is_active', true)
-      .order('name')
-      .then(({ data }) => {
-        if (isMounted) setMasters(data ?? []);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, [supabase]);
 
   const set = (key: string, val: string | number | boolean) =>
     setForm((f) => ({ ...f, [key]: val }));
@@ -60,20 +64,21 @@ export default function NewServicePage() {
     }
 
     setLoading(true);
-    // salon_id не передаём явно — он подставится автоматически на
-    // стороне базы через DEFAULT current_salon_id().
-    const { error } = await supabase.from('services').insert({
-      name: form.name.trim(),
-      duration: form.duration,
-      price: form.price,
-      master_id: form.master_id || null,
-      is_active: form.is_active,
-    });
+    const { error } = await supabase
+      .from('services')
+      .update({
+        name: form.name.trim(),
+        duration: form.duration,
+        price: form.price,
+        master_id: form.master_id || null,
+        is_active: form.is_active,
+      })
+      .eq('id', service.id);
 
     if (error) {
       toast.error('Ошибка: ' + error.message);
     } else {
-      toast.success('Услуга добавлена');
+      toast.success('Услуга обновлена');
       router.push('/admin/services');
       router.refresh();
     }
@@ -81,20 +86,8 @@ export default function NewServicePage() {
   };
 
   return (
-    <div className="p-8 max-w-xl">
-      <div className="flex items-center gap-4 mb-8">
-        <Link
-          href="/admin/services"
-          className="w-10 h-10 rounded-2xl border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all"
-        >
-          <ArrowLeft className="w-4 h-4 text-slate-600" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Новая услуга</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Добавление в систему</p>
-        </div>
-      </div>
-
+    <div className="space-y-6">
+      {/* Основные поля */}
       <div className="bg-white rounded-3xl border border-slate-100 p-8 space-y-5">
         <div>
           <label className="text-sm font-medium text-slate-700 mb-1.5 block">Название *</label>
@@ -172,7 +165,7 @@ export default function NewServicePage() {
             disabled={loading || !supabase}
             className="flex-1 h-12 bg-[#c9a08a] hover:bg-[#b38f79] text-white rounded-2xl font-medium text-sm transition-all disabled:opacity-60"
           >
-            {loading ? 'Сохраняем...' : 'Добавить услугу'}
+            {loading ? 'Сохраняем...' : 'Сохранить изменения'}
           </button>
           <Link
             href="/admin/services"
@@ -182,6 +175,13 @@ export default function NewServicePage() {
           </Link>
         </div>
       </div>
+
+      {/* Блок расходников */}
+      <ServiceConsumablesEditor
+        serviceId={service.id}
+        inventoryItems={inventoryItems}
+        initialConsumables={initialConsumables}
+      />
     </div>
   );
 }

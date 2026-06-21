@@ -24,7 +24,28 @@ type Service = {
   price: number;
 };
 
-export default function BookingPage() {
+type WeeklyHourRow = {
+  day_of_week: number;
+  is_day_off: boolean;
+  time_from: string | null;
+  time_to: string | null;
+};
+
+type BlockRow = {
+  master_id: string;
+  date_from: string;
+  date_to: string;
+  is_full_day: boolean;
+  time_from: string | null;
+  time_to: string | null;
+  reason: string | null;
+};
+
+// Один анонимный клиент на модуль (не на каждый рендер) — устраняет
+// предупреждение "Multiple GoTrueClient instances detected".
+const supabase = createClient();
+
+export default function BookingPage({ salonSlug }: { salonSlug: string }) {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
@@ -40,39 +61,32 @@ export default function BookingPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notFoundSalon, setNotFoundSalon] = useState(false);
 
-  // Шаг сетки времени (минуты), задаётся владельцем салона в настройках.
+  // Резолвится один раз через get_public_salon_by_slug. salonId нужен
+  // явно при INSERT в bookings — RLS на bookings_insert теперь проверяет
+  // реальный существующий salon_id, а не "угадывает" текущий салон через
+  // RLS-переменные сессии (это не работает между отдельными HTTP-запросами
+  // анонимного клиента — проверено через документацию PostgREST).
+  const [salonId, setSalonId] = useState<string | null>(null);
+  const [bookingHorizonDays, setBookingHorizonDays] = useState(30);
   const [slotIntervalMinutes, setSlotIntervalMinutes] = useState(30);
 
-  // Слоты времени, сгенерированные по графику мастера на выбранный день
-  // недели + длительности выбранной услуги. Пустой массив = рабочих часов
-  // на этот день вообще нет (выходной по графику ИЛИ занятие не успевает
-  // закончиться до закрытия).
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
-
-  // Занятость на выбранную дату/мастера: отдельно блокировки по времени,
-  // отдельно — полный день (отпуск/больничный), отдельно — уже занятые
-  // слоты из существующих записей.
   const [blockedTimeSlots, setBlockedTimeSlots] = useState<Set<string>>(new Set());
   const [fullDayBlocked, setFullDayBlocked] = useState(false);
   const [fullDayReason, setFullDayReason] = useState<string | null>(null);
   const [takenSlots, setTakenSlots] = useState<Set<string>>(new Set());
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // Мастера, которые недоступны на выбранную дату — либо у них весь день
-  // заблокирован (отпуск/больничный), либо по графику в этот день недели
-  // выходной. Такие мастера не показываются в списке выбора мастера.
   const [unavailableMasterIds, setUnavailableMasterIds] = useState<Set<string>>(new Set());
   const [loadingMasterAvailability, setLoadingMasterAvailability] = useState(false);
 
-  // Горизонт записи — на сколько дней вперёд клиент может бронировать.
-  // Задаётся владельцем салона в админке (таблица salon_settings).
-  const [bookingHorizonDays, setBookingHorizonDays] = useState(30);
-
-  const supabase = createClient();
-
   const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
+  // Резолв салона по slug + загрузка мастеров и услуг — всё через
+  // публичные RPC-функции, потому что прямой SELECT на masters/services/
+  // salons теперь виден только владельцу через Clerk (current_salon_id()).
   useEffect(() => {
     let isMounted = true;
 
@@ -80,35 +94,32 @@ export default function BookingPage() {
       try {
         setLoading(true);
 
-        const [mastersRes, servicesRes, settingsRes] = await Promise.all([
-          supabase.from('masters').select('*').eq('is_active', true).order('name'),
-          supabase.from('services').select('*').eq('is_active', true).order('name'),
-          supabase.from('salon_settings').select('booking_horizon_days, slot_interval_minutes').eq('id', 1).single(),
+        const salonRes = await supabase.rpc('get_public_salon_by_slug', { p_slug: salonSlug });
+        if (!isMounted) return;
+
+        const salon = salonRes.data?.[0];
+        if (salonRes.error || !salon) {
+          setNotFoundSalon(true);
+          setLoading(false);
+          return;
+        }
+
+        setSalonId(salon.id);
+        setBookingHorizonDays(salon.booking_horizon_days ?? 30);
+        setSlotIntervalMinutes(salon.slot_interval_minutes ?? 30);
+
+        const [mastersRes, servicesRes] = await Promise.all([
+          supabase.rpc('get_public_masters', { p_salon_slug: salonSlug }),
+          supabase.rpc('get_public_services', { p_salon_slug: salonSlug }),
         ]);
 
         if (!isMounted) return;
 
-        const uniqueMasters = mastersRes.data
-          ? Array.from(new Map(mastersRes.data.map((item: Master) => [item.id, item]))).map(([, v]) => v)
-          : [];
-
-        const uniqueServices = servicesRes.data
-          ? Array.from(new Map(servicesRes.data.map((item: Service) => [item.id, item]))).map(([, v]) => v)
-          : [];
-
-        setMasters(uniqueMasters);
-        setServices(uniqueServices);
-
-        if (settingsRes.data?.booking_horizon_days) {
-          setBookingHorizonDays(settingsRes.data.booking_horizon_days);
-        }
-        if (settingsRes.data?.slot_interval_minutes) {
-          setSlotIntervalMinutes(settingsRes.data.slot_interval_minutes);
-        }
-
+        setMasters(mastersRes.data ?? []);
+        setServices(servicesRes.data ?? []);
       } catch (error: any) {
-        console.error('Ошибка загрузки мастеров:', error);
-        toast.error('Не удалось загрузить мастеров');
+        console.error('Ошибка загрузки данных салона:', error);
+        toast.error('Не удалось загрузить данные');
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -119,13 +130,16 @@ export default function BookingPage() {
     return () => {
       isMounted = false;
     };
-  }, [supabase]);
+  }, [salonSlug]);
 
   // При открытии модалки (выбрана дата) подгружаем, какие мастера
-  // недоступны на эту дату — либо полная блокировка (отпуск/больничный),
-  // либо выходной день по их недельному графику.
+  // недоступны на эту дату: get_public_master_blocks принимает диапазон
+  // дат (без master_id) и возвращает блокировки всех мастеров салона —
+  // фильтруем is_full_day локально. Выходной по недельному графику
+  // проверяется отдельным вызовом get_public_master_weekly_hours на
+  // каждого мастера (она принимает master_id и возвращает все 7 дней).
   useEffect(() => {
-    if (!isModalOpen || !selectedDate) return;
+    if (!isModalOpen || !selectedDate || masters.length === 0) return;
 
     let isMounted = true;
 
@@ -135,25 +149,33 @@ export default function BookingPage() {
       const dayOfWeek = dayOfWeekFromDateString(dateStr);
 
       try {
-        const [blocksRes, hoursRes] = await Promise.all([
-          supabase
-            .from('master_blocks')
-            .select('master_id')
-            .eq('is_full_day', true)
-            .lte('date_from', dateStr)
-            .gte('date_to', dateStr),
-          supabase
-            .from('master_weekly_hours')
-            .select('master_id')
-            .eq('day_of_week', dayOfWeek)
-            .eq('is_day_off', true),
+        const [blocksRes, ...hoursResList] = await Promise.all([
+          supabase.rpc('get_public_master_blocks', {
+            p_salon_slug: salonSlug,
+            p_date_from: dateStr,
+            p_date_to: dateStr,
+          }),
+          ...masters.map((m) =>
+            supabase.rpc('get_public_master_weekly_hours', {
+              p_salon_slug: salonSlug,
+              p_master_id: m.id,
+            })
+          ),
         ]);
 
         if (!isMounted) return;
 
         const unavailable = new Set<string>();
-        (blocksRes.data ?? []).forEach((b: any) => unavailable.add(b.master_id));
-        (hoursRes.data ?? []).forEach((h: any) => unavailable.add(h.master_id));
+
+        ((blocksRes.data as BlockRow[] | null) ?? []).forEach((b) => {
+          if (b.is_full_day) unavailable.add(b.master_id);
+        });
+
+        masters.forEach((m, i) => {
+          const rows: WeeklyHourRow[] = hoursResList[i]?.data ?? [];
+          const todayRow = rows.find((r) => r.day_of_week === dayOfWeek);
+          if (todayRow?.is_day_off) unavailable.add(m.id);
+        });
 
         setUnavailableMasterIds(unavailable);
       } catch (error: any) {
@@ -168,13 +190,12 @@ export default function BookingPage() {
     return () => {
       isMounted = false;
     };
-  }, [isModalOpen, selectedDate, currentMonth, currentYear, supabase]);
+  }, [isModalOpen, selectedDate, currentMonth, currentYear, masters, salonSlug]);
 
-  // Подгружаем график мастера на выбранный день недели + занятость
-  // (блокировки по времени и существующие записи), когда доходим до шага
-  // выбора времени — в этот момент уже известны мастер, дата и услуга
-  // (длительность услуги нужна, чтобы не предложить слот, не успевающий
-  // закончиться до закрытия).
+  // Шаг выбора времени: график выбранного мастера на этот день недели +
+  // занятость. Занятые/отменённые записи берутся через get_taken_slots —
+  // узкую функцию, которая отдаёт только время и статус, без имени и
+  // телефона чужого клиента.
   useEffect(() => {
     if (currentStep !== 'time' || !selectedMaster || !selectedDate || !selectedService) return;
 
@@ -194,32 +215,28 @@ export default function BookingPage() {
       const serviceDuration = service?.duration ?? 30;
 
       try {
-        const [hoursRes, blocksRes, bookingsRes] = await Promise.all([
-          supabase
-            .from('master_weekly_hours')
-            .select('*')
-            .eq('master_id', selectedMaster)
-            .eq('day_of_week', dayOfWeek)
-            .maybeSingle(),
-          supabase
-            .from('master_blocks')
-            .select('*')
-            .eq('master_id', selectedMaster)
-            .lte('date_from', dateStr)
-            .gte('date_to', dateStr),
-          supabase
-            .from('bookings')
-            .select('time, status')
-            .eq('master_id', selectedMaster)
-            .eq('date', dateStr)
-            .neq('status', 'cancelled'),
+        const [hoursRes, blocksRes, takenRes] = await Promise.all([
+          supabase.rpc('get_public_master_weekly_hours', {
+            p_salon_slug: salonSlug,
+            p_master_id: selectedMaster,
+          }),
+          supabase.rpc('get_public_master_blocks', {
+            p_salon_slug: salonSlug,
+            p_date_from: dateStr,
+            p_date_to: dateStr,
+          }),
+          supabase.rpc('get_taken_slots', {
+            p_salon_slug: salonSlug,
+            p_master_id: selectedMaster,
+            p_date: dateStr,
+          }),
         ]);
 
         if (!isMounted) return;
 
-        const schedule = hoursRes.data;
+        const hours: WeeklyHourRow[] = hoursRes.data ?? [];
+        const schedule = hours.find((h) => h.day_of_week === dayOfWeek);
 
-        // Нет графика на этот день вообще или явный выходной — слотов нет.
         if (!schedule || schedule.is_day_off || !schedule.time_from || !schedule.time_to) {
           setFullDayBlocked(true);
           setFullDayReason('Мастер не работает в этот день');
@@ -238,23 +255,27 @@ export default function BookingPage() {
         let isFullDay = false;
         let reason: string | null = null;
 
-        (blocksRes.data ?? []).forEach((b: any) => {
-          if (b.is_full_day) {
-            isFullDay = true;
-            reason = b.reason ?? 'Выходной';
-            return;
-          }
-          if (b.time_from && b.time_to) {
-            const from = b.time_from.slice(0, 5);
-            const to = b.time_to.slice(0, 5);
-            slots.forEach((slot) => {
-              if (slot >= from && slot < to) blocked.add(slot);
-            });
-          }
-        });
+        ((blocksRes.data as BlockRow[] | null) ?? [])
+          .filter((b) => b.master_id === selectedMaster)
+          .forEach((b) => {
+            if (b.is_full_day) {
+              isFullDay = true;
+              reason = b.reason ?? 'Выходной';
+              return;
+            }
+            if (b.time_from && b.time_to) {
+              const from = b.time_from.slice(0, 5);
+              const to = b.time_to.slice(0, 5);
+              slots.forEach((slot) => {
+                if (slot >= from && slot < to) blocked.add(slot);
+              });
+            }
+          });
 
         const taken = new Set<string>(
-          (bookingsRes.data ?? []).map((b: any) => b.time.slice(0, 5))
+          ((takenRes.data as { booking_time: string; status: string }[] | null) ?? [])
+            .filter((t) => t.status !== 'cancelled')
+            .map((t) => String(t.booking_time).slice(0, 5))
         );
 
         setAvailableTimeSlots(slots);
@@ -275,7 +296,7 @@ export default function BookingPage() {
     return () => {
       isMounted = false;
     };
-  }, [currentStep, selectedMaster, selectedDate, selectedService, currentMonth, currentYear, services, slotIntervalMinutes, supabase]);
+  }, [currentStep, selectedMaster, selectedDate, selectedService, currentMonth, currentYear, services, slotIntervalMinutes, salonSlug]);
 
   const getDaysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
   const daysInMonth = getDaysInMonth(currentMonth, currentYear);
@@ -306,9 +327,9 @@ export default function BookingPage() {
   const handlePrevMonth = () => {
     if (currentMonth === 0) {
       setCurrentMonth(11);
-      setCurrentYear(y => y - 1);
+      setCurrentYear((y) => y - 1);
     } else {
-      setCurrentMonth(m => m - 1);
+      setCurrentMonth((m) => m - 1);
     }
     setSelectedDate(null);
   };
@@ -316,9 +337,9 @@ export default function BookingPage() {
   const handleNextMonth = () => {
     if (currentMonth === 11) {
       setCurrentMonth(0);
-      setCurrentYear(y => y + 1);
+      setCurrentYear((y) => y + 1);
     } else {
-      setCurrentMonth(m => m + 1);
+      setCurrentMonth((m) => m + 1);
     }
     setSelectedDate(null);
   };
@@ -365,8 +386,8 @@ export default function BookingPage() {
   };
 
   const handleConfirmBooking = async () => {
-    if (!selectedDate || !selectedMaster || !selectedService || !selectedTime || !clientName.trim() || !clientPhone.trim()) {
-      toast.error("Пожалуйста, заполните все поля");
+    if (!salonId || !selectedDate || !selectedMaster || !selectedService || !selectedTime || !clientName.trim() || !clientPhone.trim()) {
+      toast.error('Пожалуйста, заполните все поля');
       return;
     }
 
@@ -374,18 +395,19 @@ export default function BookingPage() {
 
     try {
       const { error } = await supabase.from('bookings').insert({
+        salon_id: salonId,
         date: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`,
         time: selectedTime,
         master_id: selectedMaster,
         service_id: selectedService,
         client_name: clientName.trim(),
         client_phone: clientPhone.trim(),
-        status: 'pending'
+        status: 'pending',
       });
 
       if (error) throw error;
 
-      setConfirmedBookings(prev => [...prev, selectedDate]);
+      setConfirmedBookings((prev) => [...prev, selectedDate]);
       setIsModalOpen(false);
 
       toast.success('Запись успешно создана!', {
@@ -405,6 +427,14 @@ export default function BookingPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (notFoundSalon) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#faf8f5] via-[#f5f0eb] to-[#ede4d9]">
+        <p className="text-xl text-slate-600">Салон не найден</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

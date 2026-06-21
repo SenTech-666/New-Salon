@@ -1,6 +1,18 @@
 // app/booking/page.tsx
-import BookingPage from '@/components/booking/BookingPage';
+//
+// Старый маршрут без slug. До мульти-тенантности здесь рендерился
+// BookingPage напрямую — теперь компонент требует salonSlug пропом и
+// без него не может работать (нет способа понять, какой именно салон
+// показывать). Делаем редирект на конкретный салон вместо рендера,
+// чтобы старые ссылки (кнопка на главной странице сайта, возможно уже
+// проиндексированные в Google) не превращались в мгновенный 404.
+//
+// TODO: когда появится второй салон — заменить хардкод 'vasiliki' на
+// реальный выбор (например, страница со списком салонов или редирект на
+// домен/поддомен конкретного салона).
 
-export default function Booking() {
-  return <BookingPage />;
+import { redirect } from 'next/navigation';
+
+export default function BookingRedirect() {
+  redirect('/booking/vasiliki');
 }

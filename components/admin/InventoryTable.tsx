@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/useSupabaseClient';
 import { toast } from 'sonner';
 import {
   Pencil,
@@ -29,7 +29,7 @@ export default function InventoryTable({
 }: {
   initialItems: InventoryItem[];
 }) {
-  const supabase = createClient();
+  const supabase = useSupabaseClient();
   const [items, setItems] = useState<InventoryItem[]>(initialItems);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
@@ -38,7 +38,12 @@ export default function InventoryTable({
 
   // Realtime: любое изменение в inventory_items обновляет таблицу мгновенно,
   // в том числе автосписание при завершении записи (триггер на bookings).
+  // Подписка создаётся только когда supabase готов (Clerk-сессия загружена) —
+  // иначе канал подпишется без авторизации и не получит события на
+  // таблице, где RLS теперь требует совпадения salon_id.
   useEffect(() => {
+    if (!supabase) return;
+
     const channel = supabase
       .channel('inventory-realtime')
       .on(
@@ -75,6 +80,7 @@ export default function InventoryTable({
   };
 
   const saveEdit = async (id: string) => {
+    if (!supabase) return;
     const value = parseFloat(editValue);
     if (isNaN(value) || value < 0) {
       toast.error('Введите корректное число');
@@ -94,6 +100,7 @@ export default function InventoryTable({
   };
 
   const deleteItem = async (id: string, name: string) => {
+    if (!supabase) return;
     if (!confirm(`Удалить "${name}" со склада?`)) return;
     const { error } = await supabase.from('inventory_items').delete().eq('id', id);
     if (error) {
@@ -125,9 +132,14 @@ export default function InventoryTable({
 
   // Импорт xlsx: ожидает колонки Название / Ед. изм. / Остаток / Порог уведомления.
   // Существующие товары (совпадение по названию) обновляются, новые создаются.
+  // salon_id у новых строк подставится автоматически через DEFAULT в базе.
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!supabase) {
+      toast.error('Подождите, проверяем вход в систему...');
+      return;
+    }
     setImporting(true);
 
     try {
@@ -215,7 +227,7 @@ export default function InventoryTable({
         </button>
         <button
           onClick={() => fileInputRef.current?.click()}
-          disabled={importing}
+          disabled={importing || !supabase}
           className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-50"
         >
           <Upload className="w-4 h-4" />
@@ -325,6 +337,7 @@ export default function InventoryTable({
                     <td className="px-6 py-4">
                       <button
                         onClick={() => deleteItem(item.id, item.name)}
+                        disabled={!supabase}
                         className="w-8 h-8 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all flex items-center justify-center"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

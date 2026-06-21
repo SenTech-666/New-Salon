@@ -1,27 +1,25 @@
 // lib/supabase/server.ts
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+//
+// Клиент для использования в Server Components, Server Actions и Route
+// Handlers (всё, что не помечено 'use client'). Передаёт Clerk session
+// token в Supabase через accessToken() — нативная third-party auth
+// интеграция, без отдельного JWT secret.
+//
+// Раньше здесь был createServerClient из @supabase/ssr с cookies() —
+// это был способ для Supabase Auth (свои email/пароль сессии). Сейчас
+// авторизацией полностью занимается Clerk, поэтому cookies Supabase
+// больше не нужны, нужен только токен от Clerk на каждый запрос.
+
+import { auth } from '@clerk/nextjs/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 export async function createClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
+  return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
-          } catch (e) {
-            // Игнорируем в Server Components
-          }
-        },
+      async accessToken() {
+        return (await auth()).getToken();
       },
     }
   );

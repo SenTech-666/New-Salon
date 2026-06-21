@@ -1,178 +1,61 @@
-'use client';
+import { createClient } from '@/lib/supabase/server';
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import ServiceEditForm from '@/components/admin/ServiceEditForm';
 
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
-
-type InventoryItem = {
-  id: string;
-  name: string;
-  unit: string;
-};
-
-type Consumable = {
-  id: string; // id строки в service_consumables, временное "new-N" для несохранённых
-  item_id: string;
-  amount: string;
-  isNew?: boolean;
-};
-
-export default function ServiceConsumablesEditor({
-  serviceId,
-  inventoryItems,
-  initialConsumables,
+export default async function ServiceEditPage({
+  params,
 }: {
-  serviceId: string;
-  inventoryItems: InventoryItem[];
-  initialConsumables: { id: string; item_id: string; amount: number }[];
+  params: Promise<{ id: string }>;
 }) {
-  const supabase = createClient();
-  const router = useRouter();
-  const [rows, setRows] = useState<Consumable[]>(
-    initialConsumables.map((c) => ({
-      id: c.id,
-      item_id: c.item_id,
-      amount: String(c.amount),
-    }))
-  );
-  const [saving, setSaving] = useState(false);
+  const { id } = await params;
+  const supabase = await createClient();
 
-  const addRow = () => {
-    setRows((prev) => [
-      ...prev,
-      { id: `new-${Date.now()}`, item_id: '', amount: '1', isNew: true },
-    ]);
-  };
+  const [serviceRes, mastersRes, inventoryRes, consumablesRes] = await Promise.all([
+    supabase
+      .from('services')
+      .select('id, name, duration, price, master_id, is_active')
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('masters')
+      .select('id, name')
+      .eq('is_active', true)
+      .order('name'),
+    supabase
+      .from('inventory_items')
+      .select('id, name, unit')
+      .order('name'),
+    supabase
+      .from('service_consumables')
+      .select('id, item_id, amount')
+      .eq('service_id', id),
+  ]);
 
-  const updateRow = (id: string, field: 'item_id' | 'amount', value: string) => {
-    setRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
-    );
-  };
-
-  const removeRow = async (id: string, isNew?: boolean) => {
-    if (!isNew) {
-      const { error } = await supabase
-        .from('service_consumables')
-        .delete()
-        .eq('id', id);
-      if (error) {
-        toast.error('Ошибка удаления: ' + error.message);
-        return;
-      }
-    }
-    setRows((prev) => prev.filter((r) => r.id !== id));
-    toast.success('Расходник удалён из рецепта');
-  };
-
-  const saveAll = async () => {
-    const validRows = rows.filter((r) => r.item_id && parseFloat(r.amount) > 0);
-    if (validRows.length !== rows.length) {
-      toast.error('Заполните расходник и количество во всех строках');
-      return;
-    }
-
-    setSaving(true);
-
-    for (const row of rows) {
-      if (row.isNew) {
-        const { error } = await supabase.from('service_consumables').insert({
-          service_id: serviceId,
-          item_id: row.item_id,
-          amount: parseFloat(row.amount),
-        });
-        if (error) {
-          toast.error('Ошибка сохранения: ' + error.message);
-          setSaving(false);
-          return;
-        }
-      } else {
-        const { error } = await supabase
-          .from('service_consumables')
-          .update({ item_id: row.item_id, amount: parseFloat(row.amount) })
-          .eq('id', row.id);
-        if (error) {
-          toast.error('Ошибка сохранения: ' + error.message);
-          setSaving(false);
-          return;
-        }
-      }
-    }
-
-    toast.success('Рецепт списания сохранён');
-    setSaving(false);
-    router.refresh();
-  };
+  if (!serviceRes.data) notFound();
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="font-semibold text-slate-900">Расходники для услуги</h3>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Списываются автоматически со склада, когда запись переводят в статус
-            "Завершено"
-          </p>
-        </div>
-        <button
-          onClick={addRow}
-          className="flex items-center gap-1.5 text-sm text-[#c9a08a] hover:text-[#b38f79] font-medium"
+    <div className="p-8 max-w-xl">
+      <div className="flex items-center gap-4 mb-8">
+        <Link
+          href="/admin/services"
+          className="w-10 h-10 rounded-2xl border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all"
         >
-          <Plus className="w-4 h-4" />
-          Добавить
-        </button>
+          <ArrowLeft className="w-4 h-4 text-slate-600" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Редактировать услугу</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{serviceRes.data.name}</p>
+        </div>
       </div>
 
-      {rows.length === 0 ? (
-        <p className="text-sm text-slate-400 py-6 text-center">
-          Рецепт пуст — расходники не будут списываться при завершении услуги.
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {rows.map((row) => (
-            <div key={row.id} className="flex items-center gap-3">
-              <select
-                value={row.item_id}
-                onChange={(e) => updateRow(row.id, 'item_id', e.target.value)}
-                className="flex-1 h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
-              >
-                <option value="">Выберите расходник</option>
-                {inventoryItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name} ({item.unit})
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                step="0.01"
-                value={row.amount}
-                onChange={(e) => updateRow(row.id, 'amount', e.target.value)}
-                placeholder="Кол-во"
-                className="w-24 h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
-              />
-              <button
-                onClick={() => removeRow(row.id, row.isNew)}
-                className="w-9 h-9 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 flex items-center justify-center shrink-0"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {rows.length > 0 && (
-        <button
-          onClick={saveAll}
-          disabled={saving}
-          className="w-full mt-5 h-11 rounded-2xl bg-slate-900 hover:bg-slate-700 text-white text-sm font-medium transition-all disabled:opacity-50"
-        >
-          {saving ? 'Сохраняем...' : 'Сохранить рецепт'}
-        </button>
-      )}
+      <ServiceEditForm
+        service={serviceRes.data}
+        masters={mastersRes.data ?? []}
+        inventoryItems={inventoryRes.data ?? []}
+        initialConsumables={consumablesRes.data ?? []}
+      />
     </div>
   );
 }

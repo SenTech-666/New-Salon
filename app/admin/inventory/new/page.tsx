@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/useSupabaseClient';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 export default function NewInventoryItemPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useSupabaseClient();
   const [name, setName] = useState('');
   const [unit, setUnit] = useState('шт');
   const [quantity, setQuantity] = useState('0');
@@ -17,12 +17,18 @@ export default function NewInventoryItemPage() {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
+    if (!supabase) {
+      toast.error('Подождите, проверяем вход в систему...');
+      return;
+    }
     if (!name.trim()) {
       toast.error('Введите название товара');
       return;
     }
     setLoading(true);
 
+    // salon_id не передаём явно — подставится автоматически через
+    // DEFAULT current_salon_id() на стороне базы.
     const { error } = await supabase.from('inventory_items').insert({
       name: name.trim(),
       unit: unit.trim() || 'шт',
@@ -110,7 +116,7 @@ export default function NewInventoryItemPage() {
 
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !supabase}
             className="w-full h-12 rounded-2xl bg-[#c9a08a] hover:bg-[#b38f79] text-white font-medium transition-all disabled:opacity-50"
           >
             {loading ? 'Добавляем...' : 'Добавить товар'}

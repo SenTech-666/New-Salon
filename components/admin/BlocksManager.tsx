@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/useSupabaseClient';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Trash2, Clock, CalendarOff, Plus } from 'lucide-react';
@@ -27,7 +27,7 @@ export default function BlocksManager({
   masters: Master[];
   initialBlocks: Block[];
 }) {
-  const supabase = createClient();
+  const supabase = useSupabaseClient();
   const router = useRouter();
 
   const [masterId, setMasterId] = useState(masters[0]?.id ?? '');
@@ -41,6 +41,10 @@ export default function BlocksManager({
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleSubmit = async () => {
+    if (!supabase) {
+      toast.error('Подождите, проверяем вход в систему...');
+      return;
+    }
     if (!masterId) {
       toast.error('Выберите мастера');
       return;
@@ -58,6 +62,8 @@ export default function BlocksManager({
 
     setSaving(true);
 
+    // salon_id не передаём явно — он подставится автоматически на
+    // стороне базы через DEFAULT current_salon_id().
     const { error } = await supabase.from('master_blocks').insert({
       master_id: masterId,
       date_from: dateFrom,
@@ -83,6 +89,7 @@ export default function BlocksManager({
   };
 
   const handleDelete = async (id: string) => {
+    if (!supabase) return;
     setDeletingId(id);
     const { error } = await supabase.from('master_blocks').delete().eq('id', id);
     if (error) {
@@ -225,7 +232,7 @@ export default function BlocksManager({
 
           <button
             onClick={handleSubmit}
-            disabled={saving}
+            disabled={saving || !supabase}
             className="w-full h-12 rounded-2xl bg-[#c9a08a] hover:bg-[#b38f79] text-white font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
@@ -272,7 +279,7 @@ export default function BlocksManager({
                 </div>
                 <button
                   onClick={() => handleDelete(b.id)}
-                  disabled={deletingId === b.id}
+                  disabled={deletingId === b.id || !supabase}
                   className="w-8 h-8 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all flex items-center justify-center shrink-0"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

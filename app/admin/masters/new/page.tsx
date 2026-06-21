@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/useSupabaseClient';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 export default function NewMasterPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useSupabaseClient();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: '',
@@ -25,7 +25,14 @@ export default function NewMasterPage() {
       toast.error('Введите имя мастера');
       return;
     }
+    if (!supabase) {
+      toast.error('Подождите, проверяем вход в систему...');
+      return;
+    }
     setLoading(true);
+    // salon_id не передаём явно — он подставится автоматически на
+    // стороне базы через DEFAULT current_salon_id(), исходя из того,
+    // кто сейчас залогинен (Clerk JWT).
     const { error } = await supabase.from('masters').insert({
       name: form.name.trim(),
       specialty: form.specialty.trim() || null,
@@ -97,7 +104,7 @@ export default function NewMasterPage() {
         <div className="flex gap-3 pt-2">
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !supabase}
             className="flex-1 h-12 bg-[#c9a08a] hover:bg-[#b38f79] text-white rounded-2xl font-medium text-sm transition-all disabled:opacity-60"
           >
             {loading ? 'Сохраняем...' : 'Добавить мастера'}

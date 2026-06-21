@@ -1,11 +1,11 @@
 // app/layout.tsx
 import type { Metadata } from 'next';
+import { ClerkProvider } from '@clerk/nextjs';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import SupabaseProvider from '@/components/providers';
 import { Toaster } from '@/components/ui/sonner';
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin', 'cyrillic'],
   display: 'swap',
   variable: '--font-inter',
@@ -25,18 +25,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru">
-      <body className={`${inter.variable} font-sans antialiased`}>
-        <SupabaseProvider>
+    <ClerkProvider>
+      <html lang="ru">
+        <body className={`${inter.variable} font-sans antialiased`}>
           {children}
-          <Toaster 
-            position="top-center" 
-            richColors 
-            closeButton 
+          <Toaster
+            position="top-center"
+            richColors
+            closeButton
             duration={5000}
           />
-        </SupabaseProvider>
-      </body>
-    </html>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

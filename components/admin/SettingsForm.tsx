@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/useSupabaseClient';
 import { toast } from 'sonner';
 import ScheduleGrid from '@/components/admin/ScheduleGrid';
 import { DaySchedule, defaultWeeklyTemplate } from '@/lib/scheduling';
@@ -13,7 +13,7 @@ export default function SettingsForm({
   initialHorizonDays: number;
   initialSlotInterval: number;
 }) {
-  const supabase = createClient();
+  const supabase = useSupabaseClient();
   const [horizonDays, setHorizonDays] = useState(initialHorizonDays);
   const [slotInterval, setSlotInterval] = useState(initialSlotInterval);
   const [savingGeneral, setSavingGeneral] = useState(false);
@@ -23,6 +23,7 @@ export default function SettingsForm({
   const [mastersCount, setMastersCount] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!supabase) return;
     supabase
       .from('masters')
       .select('*', { count: 'exact', head: true })
@@ -31,6 +32,10 @@ export default function SettingsForm({
   }, [supabase]);
 
   const handleSaveGeneral = async () => {
+    if (!supabase) {
+      toast.error('Подождите, проверяем вход в систему...');
+      return;
+    }
     if (horizonDays < 1 || horizonDays > 365) {
       toast.error('Количество дней должно быть от 1 до 365');
       return;
@@ -41,10 +46,12 @@ export default function SettingsForm({
     }
 
     setSavingGeneral(true);
+    // Настройки теперь хранятся в salons (одна строка на салон), а не в
+    // старой salon_settings (id=1 на всех). Без .eq() — RLS сам найдёт
+    // именно строку текущего владельца через salons_update.
     const { error } = await supabase
-      .from('salon_settings')
-      .update({ booking_horizon_days: horizonDays, slot_interval_minutes: slotInterval })
-      .eq('id', 1);
+      .from('salons')
+      .update({ booking_horizon_days: horizonDays, slot_interval_minutes: slotInterval });
 
     if (error) {
       toast.error('Ошибка сохранения: ' + error.message);
@@ -55,6 +62,10 @@ export default function SettingsForm({
   };
 
   const handleApplyToAll = async () => {
+    if (!supabase) {
+      toast.error('Подождите, проверяем вход в систему...');
+      return;
+    }
     if (!confirm('Это перезапишет график работы у ВСЕХ мастеров. Продолжить?')) return;
 
     setApplying(true);
@@ -136,7 +147,7 @@ export default function SettingsForm({
 
         <button
           onClick={handleSaveGeneral}
-          disabled={savingGeneral}
+          disabled={savingGeneral || !supabase}
           className="w-full h-11 mt-6 rounded-2xl bg-[#c9a08a] hover:bg-[#b38f79] text-white text-sm font-medium transition-all disabled:opacity-50"
         >
           {savingGeneral ? 'Сохраняем...' : 'Сохранить'}
@@ -160,7 +171,7 @@ export default function SettingsForm({
 
         <button
           onClick={handleApplyToAll}
-          disabled={applying}
+          disabled={applying || !supabase}
           className="w-full h-11 mt-6 rounded-2xl bg-slate-900 hover:bg-slate-700 text-white text-sm font-medium transition-all disabled:opacity-50"
         >
           {applying ? 'Применяем...' : 'Применить ко всем мастерам'}

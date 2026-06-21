@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/useSupabaseClient';
 import { toast } from 'sonner';
 import { Pencil, X, CheckCircle, RotateCcw, Phone, Clock, CalendarClock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -29,11 +29,12 @@ const statusConfig: Record<string, { label: string; cls: string }> = {
 
 export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useSupabaseClient();
   const [loading, setLoading] = useState<string | null>(null);
   const [rescheduling, setRescheduling] = useState<Booking | null>(null);
 
   const updateStatus = async (id: string, status: string) => {
+    if (!supabase) return;
     setLoading(id);
     const { error } = await supabase.from('bookings').update({ status }).eq('id', id);
     if (error) {
@@ -46,6 +47,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
   };
 
   const deleteBooking = async (id: string) => {
+    if (!supabase) return;
     if (!confirm('Удалить запись?')) return;
     setLoading(id);
     const { error } = await supabase.from('bookings').delete().eq('id', id);
@@ -122,7 +124,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                         {b.status === 'pending' && (
                           <button
                             onClick={() => updateStatus(b.id, 'confirmed')}
-                            disabled={loading === b.id}
+                            disabled={loading === b.id || !supabase}
                             title="Подтвердить"
                             className="w-8 h-8 rounded-xl hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center"
                           >
@@ -142,7 +144,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                         {b.status !== 'cancelled' && b.status !== 'completed' && (
                           <button
                             onClick={() => updateStatus(b.id, 'cancelled')}
-                            disabled={loading === b.id}
+                            disabled={loading === b.id || !supabase}
                             title="Отменить"
                             className="w-8 h-8 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all flex items-center justify-center"
                           >
@@ -152,7 +154,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                         {b.status === 'cancelled' && (
                           <button
                             onClick={() => updateStatus(b.id, 'pending')}
-                            disabled={loading === b.id}
+                            disabled={loading === b.id || !supabase}
                             title="Восстановить"
                             className="w-8 h-8 rounded-xl hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-all flex items-center justify-center"
                           >
@@ -162,7 +164,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                         {b.status !== 'completed' && (
                           <button
                             onClick={() => updateStatus(b.id, 'completed')}
-                            disabled={loading === b.id}
+                            disabled={loading === b.id || !supabase}
                             title="Завершить"
                             className="w-8 h-8 rounded-xl hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center text-xs font-bold"
                           >
@@ -177,7 +179,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                         </a>
                         <button
                           onClick={() => deleteBooking(b.id)}
-                          disabled={loading === b.id}
+                          disabled={loading === b.id || !supabase}
                           title="Удалить"
                           className="w-8 h-8 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-400 transition-all flex items-center justify-center"
                         >
@@ -216,7 +218,7 @@ function RescheduleModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const supabase = createClient();
+  const supabase = useSupabaseClient();
   const [date, setDate] = useState(booking.date);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -228,10 +230,13 @@ function RescheduleModal({
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
 
   useEffect(() => {
+    if (!supabase) return;
+    // Шаг сетки времени теперь хранится в salons (старая таблица
+    // salon_settings больше не обновляется — её можно удалить из базы
+    // после того, как все места, читавшие из неё, переведены сюда).
     supabase
-      .from('salon_settings')
+      .from('salons')
       .select('slot_interval_minutes')
-      .eq('id', 1)
       .single()
       .then(({ data }) => {
         if (data?.slot_interval_minutes) setSlotInterval(data.slot_interval_minutes);
@@ -239,6 +244,7 @@ function RescheduleModal({
   }, [supabase]);
 
   useEffect(() => {
+    if (!supabase) return;
     let isMounted = true;
 
     const loadAvailability = async () => {
@@ -324,6 +330,7 @@ function RescheduleModal({
   };
 
   const handleSave = async () => {
+    if (!supabase) return;
     if (!selectedTime) {
       toast.error('Выберите время');
       return;
@@ -426,7 +433,7 @@ function RescheduleModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={saving || !selectedTime || !!fullDayBlock}
+            disabled={saving || !selectedTime || !!fullDayBlock || !supabase}
             className="flex-1 h-11 rounded-2xl bg-[#c9a08a] hover:bg-[#b38f79] text-white text-sm font-medium transition-all disabled:opacity-50"
           >
             {saving ? 'Сохраняем...' : 'Перенести'}

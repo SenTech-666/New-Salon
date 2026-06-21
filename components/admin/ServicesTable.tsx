@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/useSupabaseClient';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Pencil, Trash2, Clock, Wallet } from 'lucide-react';
@@ -19,10 +19,11 @@ type Service = {
 
 export default function ServicesTable({ services }: { services: Service[] }) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useSupabaseClient();
   const [loading, setLoading] = useState<string | null>(null);
 
   const toggleActive = async (id: string, current: boolean) => {
+    if (!supabase) return;
     setLoading(id);
     const { error } = await supabase
       .from('services')
@@ -39,6 +40,7 @@ export default function ServicesTable({ services }: { services: Service[] }) {
   };
 
   const deleteService = async (id: string) => {
+    if (!supabase) return;
     if (!confirm('Удалить услугу? Это действие необратимо.')) return;
     setLoading(id);
     const { error } = await supabase.from('services').delete().eq('id', id);
@@ -97,7 +99,7 @@ export default function ServicesTable({ services }: { services: Service[] }) {
                 <td className="px-6 py-4">
                   <button
                     onClick={() => toggleActive(s.id, s.is_active)}
-                    disabled={loading === s.id}
+                    disabled={loading === s.id || !supabase}
                     className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${
                       s.is_active
                         ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
@@ -117,7 +119,7 @@ export default function ServicesTable({ services }: { services: Service[] }) {
                     </Link>
                     <button
                       onClick={() => deleteService(s.id)}
-                      disabled={loading === s.id}
+                      disabled={loading === s.id || !supabase}
                       className="w-8 h-8 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all flex items-center justify-center"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
