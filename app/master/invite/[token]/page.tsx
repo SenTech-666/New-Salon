@@ -25,8 +25,8 @@ export default async function MasterInvitePage({
       expired: 'Приглашение истекло',
     };
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#faf8f5]">
-        <p className="text-lg text-slate-600">
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-lg text-muted-foreground">
           {messages[data ?? ''] ?? 'Не удалось принять приглашение'}
         </p>
       </div>

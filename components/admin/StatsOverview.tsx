@@ -7,12 +7,12 @@ function trendPercent(current: number, previous: number) {
 
 function Trend({ current, previous }: { current: number; previous: number }) {
   const pct = trendPercent(current, previous);
-  if (pct === 0) return <span className="text-xs text-slate-400">без изменений</span>;
+  if (pct === 0) return <span className="text-xs text-muted-foreground">без изменений</span>;
   const up = pct > 0;
   return (
     <span
       className={`text-xs font-medium flex items-center gap-0.5 ${
-        up ? 'text-emerald-600' : 'text-red-500'
+        up ? 'text-success' : 'text-destructive'
       }`}
     >
       {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -42,49 +42,49 @@ export default function StatsOverview({
 }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-      <div className="bg-white rounded-3xl p-6 border border-slate-100 lg:col-span-2">
-        <div className="w-10 h-10 bg-[#fdf7f0] rounded-2xl flex items-center justify-center mb-4">
-          <Wallet className="w-5 h-5 text-[#c9a08a]" />
+      <div className="bg-card rounded-3xl p-6 border border-border lg:col-span-2">
+        <div className="w-10 h-10 bg-accent rounded-2xl flex items-center justify-center mb-4">
+          <Wallet className="w-5 h-5 text-primary" />
         </div>
-        <p className="text-3xl font-bold text-slate-900">{revenue.toLocaleString('ru-RU')} ₽</p>
-        <p className="text-sm text-slate-500 mt-1 mb-2">Выручка за период</p>
+        <p className="text-3xl font-bold text-card-foreground">{revenue.toLocaleString('ru-RU')} ₽</p>
+        <p className="text-sm text-muted-foreground mt-1 mb-2">Выручка за период</p>
         <Trend current={revenue} previous={prevRevenue} />
       </div>
 
-      <div className="bg-white rounded-3xl p-6 border border-slate-100">
-        <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
-          <Users className="w-5 h-5 text-blue-600" />
+      <div className="bg-card rounded-3xl p-6 border border-border">
+        <div className="w-10 h-10 bg-blue-500/15 rounded-2xl flex items-center justify-center mb-4">
+          <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         </div>
-        <p className="text-3xl font-bold text-slate-900">{clients}</p>
-        <p className="text-sm text-slate-500 mt-1 mb-2">Клиентов</p>
+        <p className="text-3xl font-bold text-card-foreground">{clients}</p>
+        <p className="text-sm text-muted-foreground mt-1 mb-2">Клиентов</p>
         <Trend current={clients} previous={prevClients} />
       </div>
 
-      <div className="bg-white rounded-3xl p-6 border border-slate-100">
-        <div className="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center mb-4">
-          <Receipt className="w-5 h-5 text-emerald-600" />
+      <div className="bg-card rounded-3xl p-6 border border-border">
+        <div className="w-10 h-10 bg-success/15 rounded-2xl flex items-center justify-center mb-4">
+          <Receipt className="w-5 h-5 text-success" />
         </div>
-        <p className="text-3xl font-bold text-slate-900">{avgTicket.toLocaleString('ru-RU')} ₽</p>
-        <p className="text-sm text-slate-500 mt-1">Средний чек</p>
-        <p className="text-xs text-slate-400 mt-2">{completedCount} завершённых записей</p>
+        <p className="text-3xl font-bold text-card-foreground">{avgTicket.toLocaleString('ru-RU')} ₽</p>
+        <p className="text-sm text-muted-foreground mt-1">Средний чек</p>
+        <p className="text-xs text-muted-foreground/70 mt-2">{completedCount} завершённых записей</p>
       </div>
 
-      <div className="bg-white rounded-3xl p-6 border border-slate-100">
-        <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center mb-4">
-          <Scissors className="w-5 h-5 text-amber-600" />
+      <div className="bg-card rounded-3xl p-6 border border-border">
+        <div className="w-10 h-10 bg-amber-500/15 rounded-2xl flex items-center justify-center mb-4">
+          <Scissors className="w-5 h-5 text-amber-600 dark:text-amber-400" />
         </div>
-        <p className="text-lg font-bold text-slate-900 truncate" title={topService}>
+        <p className="text-lg font-bold text-card-foreground truncate" title={topService}>
           {topService}
         </p>
-        <p className="text-sm text-slate-500 mt-1">Топ услуга по выручке</p>
+        <p className="text-sm text-muted-foreground mt-1">Топ услуга по выручке</p>
       </div>
 
-      <div className="bg-white rounded-3xl p-6 border border-slate-100">
-        <div className="w-10 h-10 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
-          <XCircle className="w-5 h-5 text-red-500" />
+      <div className="bg-card rounded-3xl p-6 border border-border">
+        <div className="w-10 h-10 bg-destructive/15 rounded-2xl flex items-center justify-center mb-4">
+          <XCircle className="w-5 h-5 text-destructive" />
         </div>
-        <p className="text-3xl font-bold text-slate-900">{cancelRate}%</p>
-        <p className="text-sm text-slate-500 mt-1">Доля отмен</p>
+        <p className="text-3xl font-bold text-card-foreground">{cancelRate}%</p>
+        <p className="text-sm text-muted-foreground mt-1">Доля отмен</p>
       </div>
     </div>
   );

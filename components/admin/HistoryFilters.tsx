@@ -54,32 +54,32 @@ export default function HistoryFilters({
   const hasActiveFilters = Object.values(current).some((v) => v);
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 p-5 mb-6">
+    <div className="bg-card rounded-3xl border border-border p-5 mb-6">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
         <div>
-          <label className="text-xs font-medium text-slate-500 mb-1 block">Дата от</label>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Дата от</label>
           <input
             type="date"
             value={form.date_from}
             onChange={(e) => set('date_from', e.target.value)}
-            className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+            className="w-full h-10 px-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-500 mb-1 block">Дата до</label>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Дата до</label>
           <input
             type="date"
             value={form.date_to}
             onChange={(e) => set('date_to', e.target.value)}
-            className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+            className="w-full h-10 px-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-500 mb-1 block">Мастер</label>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Мастер</label>
           <select
             value={form.master}
             onChange={(e) => set('master', e.target.value)}
-            className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:border-[#c9a08a]"
+            className="w-full h-10 px-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
           >
             <option value="">Все мастера</option>
             {masters.map((m) => (
@@ -88,11 +88,11 @@ export default function HistoryFilters({
           </select>
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-500 mb-1 block">Услуга</label>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Услуга</label>
           <select
             value={form.service}
             onChange={(e) => set('service', e.target.value)}
-            className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:border-[#c9a08a]"
+            className="w-full h-10 px-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
           >
             <option value="">Все услуги</option>
             {services.map((s) => (
@@ -101,23 +101,23 @@ export default function HistoryFilters({
           </select>
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-500 mb-1 block">Имя клиента</label>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Имя клиента</label>
           <input
             type="text"
             placeholder="Анна"
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
-            className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+            className="w-full h-10 px-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-500 mb-1 block">Телефон</label>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Телефон</label>
           <input
             type="text"
             placeholder="+7 999"
             value={form.phone}
             onChange={(e) => set('phone', e.target.value)}
-            className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+            className="w-full h-10 px-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
           />
         </div>
       </div>
@@ -125,7 +125,7 @@ export default function HistoryFilters({
       <div className="flex gap-2">
         <button
           onClick={applyFilters}
-          className="flex items-center gap-2 h-10 px-5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 transition-all"
+          className="flex items-center gap-2 h-10 px-5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-all"
         >
           <Search className="w-4 h-4" />
           Применить
@@ -133,7 +133,7 @@ export default function HistoryFilters({
         {hasActiveFilters && (
           <button
             onClick={resetFilters}
-            className="flex items-center gap-2 h-10 px-5 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition-all"
+            className="flex items-center gap-2 h-10 px-5 rounded-xl border border-border text-card-foreground/80 text-sm font-medium hover:bg-muted transition-all"
           >
             <X className="w-4 h-4" />
             Сбросить

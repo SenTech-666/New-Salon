@@ -10,12 +10,12 @@ export default function MastersRanking({ ranking }: { ranking: MasterStat[] }) {
   const maxRevenue = ranking[0]?.revenue ?? 1;
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 p-6">
-      <h2 className="font-semibold text-slate-900 mb-1">Рейтинг мастеров</h2>
-      <p className="text-sm text-slate-400 mb-6">По выручке за выбранный период</p>
+    <div className="bg-card rounded-3xl border border-border p-6">
+      <h2 className="font-semibold text-card-foreground mb-1">Рейтинг мастеров</h2>
+      <p className="text-sm text-muted-foreground mb-6">По выручке за выбранный период</p>
 
       {ranking.length === 0 ? (
-        <p className="text-sm text-slate-400 py-8 text-center">
+        <p className="text-sm text-muted-foreground py-8 text-center">
           Нет завершённых записей за этот период
         </p>
       ) : (
@@ -27,25 +27,25 @@ export default function MastersRanking({ ranking }: { ranking: MasterStat[] }) {
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     {i === 0 ? (
-                      <Crown className="w-4 h-4 text-[#c9a08a]" />
+                      <Crown className="w-4 h-4 text-primary" />
                     ) : (
-                      <span className="text-xs font-medium text-slate-400 w-4 text-center">
+                      <span className="text-xs font-medium text-muted-foreground w-4 text-center">
                         {i + 1}
                       </span>
                     )}
-                    <span className="text-sm font-medium text-slate-800">{m.name}</span>
+                    <span className="text-sm font-medium text-card-foreground/90">{m.name}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-sm font-semibold text-slate-900">
+                    <span className="text-sm font-semibold text-card-foreground">
                       {m.revenue.toLocaleString('ru-RU')} ₽
                     </span>
-                    <span className="text-xs text-slate-400 ml-2">{m.bookingsCount} зап.</span>
+                    <span className="text-xs text-muted-foreground ml-2">{m.bookingsCount} зап.</span>
                   </div>
                 </div>
-                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
-                      i === 0 ? 'bg-[#c9a08a]' : 'bg-slate-300'
+                      i === 0 ? 'bg-primary' : 'bg-muted-foreground/40'
                     }`}
                     style={{ width: `${widthPct}%` }}
                   />

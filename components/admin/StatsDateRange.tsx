@@ -35,36 +35,36 @@ export default function StatsDateRange({ from, to }: { from: string; to: string 
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <div className="flex items-center gap-1 bg-white rounded-2xl border border-slate-100 p-1">
+      <div className="flex items-center gap-1 bg-card rounded-2xl border border-border p-1">
         {presets.map((p) => (
           <button
             key={p.days}
             onClick={() => applyPreset(p.days)}
-            className="px-3 py-1.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-[#fdf7f0] hover:text-[#c9a08a] transition-all"
+            className="px-3 py-1.5 rounded-xl text-sm font-medium text-card-foreground/80 hover:bg-accent hover:text-primary transition-all"
           >
             {p.label}
           </button>
         ))}
       </div>
 
-      <div className="flex items-center gap-2 bg-white rounded-2xl border border-slate-100 px-3 py-1.5">
-        <Calendar className="w-4 h-4 text-slate-400" />
+      <div className="flex items-center gap-2 bg-card rounded-2xl border border-border px-3 py-1.5">
+        <Calendar className="w-4 h-4 text-muted-foreground" />
         <input
           type="date"
           value={localFrom}
           onChange={(e) => setLocalFrom(e.target.value)}
-          className="text-sm text-slate-700 focus:outline-none"
+          className="text-sm text-card-foreground/80 bg-transparent focus:outline-none"
         />
-        <span className="text-slate-300">—</span>
+        <span className="text-muted-foreground/50">—</span>
         <input
           type="date"
           value={localTo}
           onChange={(e) => setLocalTo(e.target.value)}
-          className="text-sm text-slate-700 focus:outline-none"
+          className="text-sm text-card-foreground/80 bg-transparent focus:outline-none"
         />
         <button
           onClick={() => apply(localFrom, localTo)}
-          className="ml-1 text-sm font-medium text-[#c9a08a] hover:text-[#b38f79] transition-colors"
+          className="ml-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
         >
           ОК
         </button>

@@ -114,18 +114,18 @@ export default function ServiceConsumablesEditor({
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 p-6">
+    <div className="bg-card rounded-3xl border border-border p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-semibold text-slate-900">Расходники для услуги</h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <h3 className="font-semibold text-card-foreground">Расходники для услуги</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Списываются автоматически со склада, когда запись переводят в статус
             "Завершено"
           </p>
         </div>
         <button
           onClick={addRow}
-          className="flex items-center gap-1.5 text-sm text-[#c9a08a] hover:text-[#b38f79] font-medium"
+          className="flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium"
         >
           <Plus className="w-4 h-4" />
           Добавить
@@ -133,7 +133,7 @@ export default function ServiceConsumablesEditor({
       </div>
 
       {rows.length === 0 ? (
-        <p className="text-sm text-slate-400 py-6 text-center">
+        <p className="text-sm text-muted-foreground py-6 text-center">
           Рецепт пуст — расходники не будут списываться при завершении услуги.
         </p>
       ) : (
@@ -143,7 +143,7 @@ export default function ServiceConsumablesEditor({
               <select
                 value={row.item_id}
                 onChange={(e) => updateRow(row.id, 'item_id', e.target.value)}
-                className="flex-1 h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+                className="flex-1 h-10 px-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
               >
                 <option value="">Выберите расходник</option>
                 {inventoryItems.map((item) => (
@@ -158,12 +158,12 @@ export default function ServiceConsumablesEditor({
                 value={row.amount}
                 onChange={(e) => updateRow(row.id, 'amount', e.target.value)}
                 placeholder="Кол-во"
-                className="w-24 h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+                className="w-24 h-10 px-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
               />
               <button
                 onClick={() => removeRow(row.id, row.isNew)}
                 disabled={!supabase && !row.isNew}
-                className="w-9 h-9 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 flex items-center justify-center shrink-0"
+                className="w-9 h-9 rounded-xl hover:bg-destructive/15 text-muted-foreground hover:text-destructive flex items-center justify-center shrink-0"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -176,7 +176,7 @@ export default function ServiceConsumablesEditor({
         <button
           onClick={saveAll}
           disabled={saving || !supabase}
-          className="w-full mt-5 h-11 rounded-2xl bg-slate-900 hover:bg-slate-700 text-white text-sm font-medium transition-all disabled:opacity-50"
+          className="w-full mt-5 h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-all disabled:opacity-50"
         >
           {saving ? 'Сохраняем...' : 'Сохранить рецепт'}
         </button>

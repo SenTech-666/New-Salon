@@ -29,29 +29,23 @@ export default async function AdminHistoryPage({
     .order('time', { ascending: false });
 
   if (params.date_from) query = query.gte('date', params.date_from);
-  if (params.date_to) query = query.lte('date', params.date_to);
-  if (params.master) query = query.eq('master_id', params.master);
-  if (params.service) query = query.eq('service_id', params.service);
-  if (params.name) query = query.ilike('client_name', `%${params.name}%`);
-  if (params.phone) query = query.ilike('client_phone', `%${params.phone}%`);
+  if (params.date_to)   query = query.lte('date', params.date_to);
+  if (params.master)    query = query.eq('master_id', params.master);
+  if (params.service)   query = query.eq('service_id', params.service);
+  if (params.name)      query = query.ilike('client_name', `%${params.name}%`);
+  if (params.phone)     query = query.ilike('client_phone', `%${params.phone}%`);
 
   const { data: bookings } = await query;
-
-  const { data: masters } = await supabase
-    .from('masters')
-    .select('id, name')
-    .order('name');
-
-  const { data: services } = await supabase
-    .from('services')
-    .select('id, name')
-    .order('name');
+  const { data: masters }  = await supabase.from('masters').select('id, name').order('name');
+  const { data: services } = await supabase.from('services').select('id, name').order('name');
 
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">История записей</h1>
-        <p className="text-slate-500 mt-1">{bookings?.length ?? 0} записей до сегодняшнего дня</p>
+        <h1 className="text-3xl font-bold text-foreground">История записей</h1>
+        <p className="text-muted-foreground mt-1">
+          {bookings?.length ?? 0} записей до сегодняшнего дня
+        </p>
       </div>
 
       <HistoryFilters

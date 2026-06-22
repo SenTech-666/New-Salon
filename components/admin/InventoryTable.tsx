@@ -220,7 +220,7 @@ export default function InventoryTable({
       <div className="flex items-center gap-3 mb-5">
         <button
           onClick={exportToXlsx}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium text-card-foreground/80 hover:bg-muted transition-all"
         >
           <Download className="w-4 h-4" />
           Экспорт в Excel
@@ -228,7 +228,7 @@ export default function InventoryTable({
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={importing || !supabase}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium text-card-foreground/80 hover:bg-muted transition-all disabled:opacity-50"
         >
           <Upload className="w-4 h-4" />
           {importing ? 'Импортируем...' : 'Импорт из Excel'}
@@ -243,42 +243,42 @@ export default function InventoryTable({
       </div>
 
       {sorted.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-100 p-16 text-center">
-          <FileSpreadsheet className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-400">Склад пуст. Добавьте товар или импортируйте Excel-файл.</p>
+        <div className="bg-card rounded-3xl border border-border p-16 text-center">
+          <FileSpreadsheet className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+          <p className="text-muted-foreground">Склад пуст. Добавьте товар или импортируйте Excel-файл.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden">
+        <div className="bg-card rounded-3xl border border-border overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="text-left px-6 py-4 text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-border bg-muted/50">
+                <th className="text-left px-6 py-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Название
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Остаток
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Порог
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Статус
                 </th>
                 <th className="px-6 py-4" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-border/60">
               {sorted.map((item) => {
                 const isLow = item.quantity <= item.low_stock_threshold;
                 return (
                   <tr
                     key={item.id}
-                    className={`hover:bg-slate-50/50 transition-colors ${
-                      isLow ? 'bg-amber-50/40' : ''
+                    className={`hover:bg-muted/50 transition-colors ${
+                      isLow ? 'bg-amber-500/10' : ''
                     }`}
                   >
                     <td className="px-6 py-4">
-                      <p className="font-medium text-slate-900 text-sm">{item.name}</p>
+                      <p className="font-medium text-card-foreground text-sm">{item.name}</p>
                     </td>
                     <td className="px-6 py-4">
                       {editingId === item.id ? (
@@ -288,18 +288,18 @@ export default function InventoryTable({
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             autoFocus
-                            className="w-20 h-8 px-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+                            className="w-20 h-8 px-2 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
                           />
-                          <span className="text-xs text-slate-400">{item.unit}</span>
+                          <span className="text-xs text-muted-foreground">{item.unit}</span>
                           <button
                             onClick={() => saveEdit(item.id)}
-                            className="w-7 h-7 rounded-lg hover:bg-emerald-50 text-emerald-600 flex items-center justify-center"
+                            className="w-7 h-7 rounded-lg hover:bg-success/15 text-success flex items-center justify-center"
                           >
                             <Check className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-400 flex items-center justify-center"
+                            className="w-7 h-7 rounded-lg hover:bg-muted text-muted-foreground flex items-center justify-center"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -307,29 +307,29 @@ export default function InventoryTable({
                       ) : (
                         <button
                           onClick={() => startEdit(item)}
-                          className="text-sm text-slate-700 hover:text-[#c9a08a] flex items-center gap-1.5 group"
+                          className="text-sm text-card-foreground/80 hover:text-primary flex items-center gap-1.5 group"
                         >
-                          <span className={isLow ? 'font-semibold text-amber-700' : ''}>
+                          <span className={isLow ? 'font-semibold text-amber-600 dark:text-amber-400' : ''}>
                             {item.quantity}
                           </span>
-                          <span className="text-slate-400">{item.unit}</span>
+                          <span className="text-muted-foreground">{item.unit}</span>
                           <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                         </button>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-muted-foreground">
                         {item.low_stock_threshold} {item.unit}
                       </p>
                     </td>
                     <td className="px-6 py-4">
                       {isLow ? (
-                        <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-amber-100 text-amber-700 flex items-center gap-1 w-fit">
+                        <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center gap-1 w-fit">
                           <AlertTriangle className="w-3 h-3" />
                           Заканчивается
                         </span>
                       ) : (
-                        <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-50 text-emerald-600 w-fit">
+                        <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-success/15 text-success w-fit">
                           В наличии
                         </span>
                       )}
@@ -338,7 +338,7 @@ export default function InventoryTable({
                       <button
                         onClick={() => deleteItem(item.id, item.name)}
                         disabled={!supabase}
-                        className="w-8 h-8 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all flex items-center justify-center"
+                        className="w-8 h-8 rounded-xl hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-all flex items-center justify-center"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

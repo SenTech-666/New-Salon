@@ -82,38 +82,38 @@ export default function NewBookingPage() {
       <div className="flex items-center gap-4 mb-8">
         <Link
           href="/admin/bookings"
-          className="w-10 h-10 rounded-2xl border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all"
+          className="w-10 h-10 rounded-2xl border border-border flex items-center justify-center hover:bg-muted transition-all"
         >
-          <ArrowLeft className="w-4 h-4 text-slate-600" />
+          <ArrowLeft className="w-4 h-4 text-muted-foreground" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Новая запись</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Добавление записи вручную</p>
+          <h1 className="text-2xl font-bold text-foreground">Новая запись</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Добавление записи вручную</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 p-8 space-y-6">
+      <div className="bg-card rounded-3xl border border-border p-8 space-y-6">
 
         {/* Клиент */}
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Клиент</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">Клиент</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Имя и фамилия *</label>
+              <label className="text-sm font-medium text-card-foreground mb-1.5 block">Имя и фамилия *</label>
               <input
                 value={form.client_name}
                 onChange={e => set('client_name', e.target.value)}
                 placeholder="Анна Иванова"
-                className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a] transition-colors"
+                className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Телефон *</label>
+              <label className="text-sm font-medium text-card-foreground mb-1.5 block">Телефон *</label>
               <input
                 value={form.client_phone}
                 onChange={e => set('client_phone', e.target.value)}
                 placeholder="+7 (999) 123-45-67"
-                className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a] transition-colors"
+                className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
               />
             </div>
           </div>
@@ -121,14 +121,14 @@ export default function NewBookingPage() {
 
         {/* Мастер и услуга */}
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Запись</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">Запись</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Мастер *</label>
+              <label className="text-sm font-medium text-card-foreground mb-1.5 block">Мастер *</label>
               <select
                 value={form.master_id}
                 onChange={e => set('master_id', e.target.value)}
-                className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a] transition-colors bg-white"
+                className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
               >
                 <option value="">Выберите мастера</option>
                 {masters.map(m => (
@@ -137,11 +137,11 @@ export default function NewBookingPage() {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Услуга *</label>
+              <label className="text-sm font-medium text-card-foreground mb-1.5 block">Услуга *</label>
               <select
                 value={form.service_id}
                 onChange={e => set('service_id', e.target.value)}
-                className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a] transition-colors bg-white"
+                className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
               >
                 <option value="">Выберите услугу</option>
                 {services.map(s => (
@@ -152,7 +152,7 @@ export default function NewBookingPage() {
           </div>
 
           {selectedService && (
-            <div className="mt-3 px-4 py-3 bg-[#fdf7f0] rounded-2xl text-sm text-slate-600 flex gap-4">
+            <div className="mt-3 px-4 py-3 bg-accent rounded-2xl text-sm text-accent-foreground flex gap-4">
               <span>Длительность: <strong>{selectedService.duration} мин</strong></span>
               <span>Стоимость: <strong>{selectedService.price} руб.</strong></span>
             </div>
@@ -161,23 +161,23 @@ export default function NewBookingPage() {
 
         {/* Дата и время */}
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Дата и время</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">Дата и время</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Дата *</label>
+              <label className="text-sm font-medium text-card-foreground mb-1.5 block">Дата *</label>
               <input
                 type="date"
                 value={form.date}
                 onChange={e => set('date', e.target.value)}
-                className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a] transition-colors"
+                className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Время *</label>
+              <label className="text-sm font-medium text-card-foreground mb-1.5 block">Время *</label>
               <select
                 value={form.time}
                 onChange={e => set('time', e.target.value)}
-                className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a] transition-colors bg-white"
+                className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
               >
                 {TIMES.map(t => (
                   <option key={t} value={t}>{t}</option>
@@ -189,7 +189,7 @@ export default function NewBookingPage() {
 
         {/* Статус */}
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Статус</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">Статус</p>
           <div className="flex gap-3 flex-wrap">
             {[
               { val: 'confirmed', label: 'Подтверждено' },
@@ -202,8 +202,8 @@ export default function NewBookingPage() {
                 onClick={() => set('status', val)}
                 className={`px-4 py-2 rounded-2xl text-sm font-medium transition-all border ${
                   form.status === val
-                    ? 'bg-[#c9a08a] text-white border-[#c9a08a]'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#c9a08a]'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-muted-foreground border-border hover:border-primary'
                 }`}
               >
                 {label}
@@ -217,13 +217,13 @@ export default function NewBookingPage() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 h-12 bg-[#c9a08a] hover:bg-[#b38f79] text-white rounded-2xl font-medium text-sm transition-all disabled:opacity-60"
+            className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-medium text-sm transition-all disabled:opacity-60"
           >
             {loading ? 'Сохраняем...' : 'Создать запись'}
           </button>
           <Link
             href="/admin/bookings"
-            className="h-12 px-6 border border-slate-200 text-slate-600 rounded-2xl font-medium text-sm transition-all hover:bg-slate-50 flex items-center"
+            className="h-12 px-6 border border-border text-muted-foreground rounded-2xl font-medium text-sm transition-all hover:bg-muted flex items-center"
           >
             Отмена
           </Link>

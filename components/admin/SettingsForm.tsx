@@ -145,63 +145,63 @@ export default function SettingsForm({
 
   return (
     <div className="space-y-8 max-w-2xl">
-      <div className="bg-white rounded-3xl border border-slate-100 p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-1">Профиль салона</h2>
-        <p className="text-sm text-slate-500 mb-6">
+      <div className="bg-card rounded-3xl border border-border p-6">
+        <h2 className="text-lg font-semibold text-card-foreground mb-1">Профиль салона</h2>
+        <p className="text-sm text-muted-foreground mb-6">
           Отображается на публичной странице записи
         </p>
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-2 block">Название</label>
+            <label className="text-sm font-medium text-card-foreground/80 mb-2 block">Название</label>
             <input
               value={salonName}
               onChange={(e) => setSalonName(e.target.value)}
               placeholder="Салон красоты «Лаванда»"
-              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+              className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-2 block">Описание</label>
+            <label className="text-sm font-medium text-card-foreground/80 mb-2 block">Описание</label>
             <textarea
               value={salonDescription}
               onChange={(e) => setSalonDescription(e.target.value)}
               placeholder="Пара слов о салоне — стиль, атмосфера, специализация"
               rows={3}
-              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a] resize-none"
+              className="w-full px-4 py-3 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary resize-none"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-2 block">Адрес</label>
+            <label className="text-sm font-medium text-card-foreground/80 mb-2 block">Адрес</label>
             <input
               value={salonAddress}
               onChange={(e) => setSalonAddress(e.target.value)}
               placeholder="ул. Пушкина, д. 10, Москва"
-              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+              className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-2 block">Телефон</label>
+            <label className="text-sm font-medium text-card-foreground/80 mb-2 block">Телефон</label>
             <input
               value={salonPhone}
               onChange={(e) => setSalonPhone(e.target.value)}
               placeholder="+7 (999) 123-45-67"
-              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+              className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-2 block">Фото (URL)</label>
+            <label className="text-sm font-medium text-card-foreground/80 mb-2 block">Фото (URL)</label>
             <input
               value={salonPhotoUrl}
               onChange={(e) => setSalonPhotoUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+              className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
             />
             {salonPhotoUrl && (
               <img
                 src={salonPhotoUrl}
                 alt="preview"
-                className="mt-3 w-20 h-20 rounded-2xl object-cover border border-slate-100"
+                className="mt-3 w-20 h-20 rounded-2xl object-cover border border-border"
                 onError={(e) => (e.currentTarget.style.display = 'none')}
               />
             )}
@@ -211,21 +211,21 @@ export default function SettingsForm({
         <button
           onClick={handleSaveProfile}
           disabled={savingProfile || !supabase}
-          className="w-full h-11 mt-6 rounded-2xl bg-[#c9a08a] hover:bg-[#b38f79] text-white text-sm font-medium transition-all disabled:opacity-50"
+          className="w-full h-11 mt-6 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-all disabled:opacity-50"
         >
           {savingProfile ? 'Сохраняем...' : 'Сохранить профиль'}
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-1">Запись клиентов</h2>
-        <p className="text-sm text-slate-500 mb-6">
+      <div className="bg-card rounded-3xl border border-border p-6">
+        <h2 className="text-lg font-semibold text-card-foreground mb-1">Запись клиентов</h2>
+        <p className="text-sm text-muted-foreground mb-6">
           Общие правила того, как клиенты бронируют время
         </p>
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-2 block">
+            <label className="text-sm font-medium text-card-foreground/80 mb-2 block">
               Горизонт записи (дней вперёд)
             </label>
             <input
@@ -234,12 +234,12 @@ export default function SettingsForm({
               max={365}
               value={horizonDays}
               onChange={(e) => setHorizonDays(Number(e.target.value))}
-              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+              className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-2 block">
+            <label className="text-sm font-medium text-card-foreground/80 mb-2 block">
               Шаг сетки времени (минут между слотами)
             </label>
             <input
@@ -249,9 +249,9 @@ export default function SettingsForm({
               step={5}
               value={slotInterval}
               onChange={(e) => setSlotInterval(Number(e.target.value))}
-              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+              className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
             />
-            <p className="text-xs text-slate-400 mt-1.5">
+            <p className="text-xs text-muted-foreground mt-1.5">
               Например, 30 — клиент сможет выбрать 10:00, 10:30, 11:00 и т.д.
             </p>
           </div>
@@ -260,18 +260,18 @@ export default function SettingsForm({
         <button
           onClick={handleSaveGeneral}
           disabled={savingGeneral || !supabase}
-          className="w-full h-11 mt-6 rounded-2xl bg-[#c9a08a] hover:bg-[#b38f79] text-white text-sm font-medium transition-all disabled:opacity-50"
+          className="w-full h-11 mt-6 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-all disabled:opacity-50"
         >
           {savingGeneral ? 'Сохраняем...' : 'Сохранить'}
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-1">Общие часы работы</h2>
-        <p className="text-sm text-slate-500 mb-6">
+      <div className="bg-card rounded-3xl border border-border p-6">
+        <h2 className="text-lg font-semibold text-card-foreground mb-1">Общие часы работы</h2>
+        <p className="text-sm text-muted-foreground mb-6">
           Настройте шаблон один раз и примените ко всем мастерам сразу.
           {mastersCount !== null && (
-            <span className="block mt-1 text-xs text-slate-400">
+            <span className="block mt-1 text-xs text-muted-foreground/70">
               Сейчас активных мастеров: {mastersCount}
             </span>
           )}
@@ -284,7 +284,7 @@ export default function SettingsForm({
         <button
           onClick={handleApplyToAll}
           disabled={applying || !supabase}
-          className="w-full h-11 mt-6 rounded-2xl bg-slate-900 hover:bg-slate-700 text-white text-sm font-medium transition-all disabled:opacity-50"
+          className="w-full h-11 mt-6 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-all disabled:opacity-50"
         >
           {applying ? 'Применяем...' : 'Применить ко всем мастерам'}
         </button>

@@ -3,6 +3,161 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================
+   ЕДИНАЯ ТЕМА ПРОЕКТА — графит + медь
+   ============================================================
+   Это источник правды для ВСЕХ shadcn-компонентов (Button, Card,
+   Dialog, Input, Table, Tabs, Badge и т.д.) во всём проекте —
+   booking, admin, master, owner. Раньше эти переменные не были
+   объявлены вовсе, и shadcn-компоненты рисовались с невалидными
+   hsl(var(--undefined)) цветами.
+
+   .dark вешается на <html> через ThemeProvider (components/theme/
+   theme-provider.tsx) — НЕ через .theme-dark/.theme-light, как было
+   раньше только в BookingPage. Один класс темы на весь проект.
+
+   Кастомные "bp-*" классы и переменные (--bp-accent, --bp-glass-bg
+   и т.д. в BookingPage) можно постепенно отказаться от них в пользу
+   этих токенов, либо оставить для специфичных эффектов (стекло,
+   blur) — сами цвета теперь берутся из одного источника.
+
+   Premium-кастомизация (будущее): для отдельного салона эти же
+   переменные можно переопределить инлайн-стилем на корневом контейнере
+   страницы (style={{'--primary': ...}}), подтягивая значения из
+   salons.theme_overrides (jsonb) в БД. Free-тариф — без оверрайдов,
+   использует эти значения по умолчанию.
+   ============================================================ */
+
+:root {
+  /* ---------- СВЕТЛАЯ ТЕМА (графит-светлый + медь) ---------- */
+  --background: 35 32% 93%;          /* bp-bg-1 светлой темы */
+  --foreground: 30 5% 16%;           /* bp-text светлой темы */
+
+  --card: 35 25% 96%;
+  --card-foreground: 30 5% 16%;
+
+  --popover: 35 25% 97%;
+  --popover-foreground: 30 5% 16%;
+
+  --primary: 21 55% 51%;             /* медь — фирменный акцент */
+  --primary-foreground: 36 33% 97%;
+
+  --secondary: 35 20% 88%;
+  --secondary-foreground: 30 5% 16%;
+
+  --muted: 35 18% 90%;
+  --muted-foreground: 30 4% 52%;
+
+  --accent: 21 40% 90%;              /* медь 10% — подложки иконок */
+  --accent-foreground: 21 55% 35%;
+
+  --destructive: 4 48% 52%;
+  --destructive-foreground: 36 33% 97%;
+
+  --success: 153 51% 37%;
+  --success-foreground: 36 33% 97%;
+
+  --border: 30 10% 85%;
+  --input: 30 10% 85%;
+  --ring: 21 55% 51%;
+
+  --radius: 1rem;
+
+  /* ---------- BOOKING PAGE — переменные стекла/глассморфизма ----------
+     Перенесены сюда из BookingPage.tsx (был компонент ThemeStyles с
+     <style jsx global>). styled-jsx не гарантированно работает в Next.js
+     App Router без явной настройки babel-плагина — на сервере эти стили
+     просто не попадали в HTML вообще (проверено через view-source: блок
+     bp-bg-1 отсутствовал в разметке). Статический CSS в этом файле
+     гарантированно собирается Tailwind'ом и попадает на страницу всегда. */
+  --bp-bg-1: #f2ede6;
+  --bp-bg-2: #ece4d8;
+  --bp-text: #2a2826;
+  --bp-text-dim: #8a8580;
+  --bp-text-faint: #b0aaa0;
+
+  --bp-accent: #c76e3d;
+  --bp-accent-hover: #b85f30;
+  --bp-accent-10: rgba(199, 110, 61, 0.10);
+
+  --bp-success: #2f8f63;
+  --bp-warning-bg: rgba(199, 110, 61, 0.08);
+  --bp-warning-text: #a35a2e;
+
+  --bp-glass-bg: rgba(255, 255, 255, 0.65);
+  --bp-glass-bg-strong: rgba(255, 255, 255, 0.78);
+  --bp-glass-border: rgba(28, 27, 26, 0.14);
+  --bp-glass-highlight: rgba(255, 255, 255, 0.95);
+  --bp-glass-shadow: 0 12px 40px rgba(28, 27, 26, 0.18);
+
+  --bp-cell-bg: rgba(255, 255, 255, 0.4);
+  --bp-cell-border: rgba(28, 27, 26, 0.06);
+
+  --bp-font-display: 'Fraunces', serif;
+  --bp-font-body: 'Inter', system-ui, sans-serif;
+}
+
+.dark {
+  /* ---------- ТЁМНАЯ ТЕМА (графит + медь) — дефолт проекта ---------- */
+  --background: 30 4% 11%;           /* bp-bg-1 тёмной темы */
+  --foreground: 36 33% 97%;          /* bp-text тёмной темы */
+
+  --card: 30 6% 14%;                 /* bp-glass-bg-strong */
+  --card-foreground: 36 33% 97%;
+
+  --popover: 30 6% 14%;
+  --popover-foreground: 36 33% 97%;
+
+  --primary: 21 55% 51%;             /* медь — та же на обеих темах */
+  --primary-foreground: 36 33% 97%;
+
+  --secondary: 30 6% 18%;
+  --secondary-foreground: 36 33% 97%;
+
+  --muted: 30 6% 18%;
+  --muted-foreground: 37 8% 58%;
+
+  --accent: 21 55% 20%;              /* медь 10% на тёмном фоне */
+  --accent-foreground: 21 60% 75%;
+
+  --destructive: 4 48% 52%;
+  --destructive-foreground: 36 33% 97%;
+
+  --success: 149 38% 55%;
+  --success-foreground: 30 4% 11%;
+
+  --border: 36 33% 97% / 0.14;       /* совпадает с --bp-glass-border */
+  --input: 30 6% 18%;
+  --ring: 21 55% 51%;
+
+  /* ---------- BOOKING PAGE — переменные стекла, тёмная тема ---------- */
+  --bp-bg-1: #1c1b1a;
+  --bp-bg-2: #211f1d;
+  --bp-text: #faf8f5;
+  --bp-text-dim: #9c958a;
+  --bp-text-faint: #6f6a62;
+
+  --bp-accent: #c76e3d;
+  --bp-accent-hover: #b85f30;
+  --bp-accent-10: rgba(199, 110, 61, 0.12);
+
+  --bp-success: #5fb88a;
+  --bp-warning-bg: rgba(199, 110, 61, 0.08);
+  --bp-warning-text: #d99a6c;
+
+  --bp-glass-bg: rgba(250, 248, 245, 0.10);
+  --bp-glass-bg-strong: rgba(38, 36, 34, 0.55);
+  --bp-glass-border: rgba(250, 248, 245, 0.16);
+  --bp-glass-highlight: rgba(255, 255, 255, 0.14);
+  --bp-glass-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+
+  --bp-cell-bg: rgba(250, 248, 245, 0.035);
+  --bp-cell-border: rgba(250, 248, 245, 0.07);
+
+  --bp-font-display: 'Fraunces', serif;
+  --bp-font-body: 'Inter', system-ui, sans-serif;
+}
+
 @theme {
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -15,6 +170,8 @@
   --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-accent: hsl(var(--accent));
@@ -29,7 +186,7 @@
   * {
     @apply border-border outline-ring/50;
   }
-  
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -43,11 +200,12 @@
   background-position: center;
   background-attachment: fixed;
 }
+
 /* Кастомный красивый scrollbar */
 @layer utilities {
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: #c9a08a #f1f1f1;
+    scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -55,18 +213,18 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f8f5f2;
+    background: hsl(var(--muted));
     border-radius: 20px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #c9a08a;
+    background: hsl(var(--primary));
     border-radius: 20px;
     transition: all 0.2s ease;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #b38f79;
+    opacity: 0.85;
   }
 
   /* Для модалки делаем чуть толще и приятнее */
@@ -75,20 +233,280 @@
   }
 
   .modal-scrollbar::-webkit-scrollbar-track {
-    background: #faf8f5;
+    background: hsl(var(--background));
     border-radius: 9999px;
   }
 
   .modal-scrollbar::-webkit-scrollbar-thumb {
-    background: #c9a08a;
+    background: hsl(var(--primary));
     border-radius: 9999px;
   }
 
   .modal-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #b38f79;
+    opacity: 0.85;
   }
 }
-/* Ещё более мягкий вариант */
-.modal-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(#c9a08a, #b38f79);
+
+/* ============================================================
+   BOOKING PAGE — стекло, ячейки календаря, модалка, тосты
+   ============================================================
+   Перенесено сюда из BookingPage.tsx (компонент ThemeStyles,
+   <style jsx global>). См. комментарий у --bp-bg-1 выше про причину
+   переноса (styled-jsx не рендерился в HTML на сервере).
+   ============================================================ */
+
+.bp-bg {
+  background: linear-gradient(135deg, var(--bp-bg-1), var(--bp-bg-2));
+  font-family: var(--bp-font-body);
+  transition: background 0.4s ease;
+}
+
+.bp-glass {
+  background: var(--bp-glass-bg);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid var(--bp-glass-border);
+  box-shadow: inset 0 1px 0 var(--bp-glass-highlight), var(--bp-glass-shadow);
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+.bp-modal {
+  background: var(--bp-glass-bg-strong) !important;
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  border: 1px solid var(--bp-glass-border) !important;
+  box-shadow: inset 0 1px 0 var(--bp-glass-highlight), var(--bp-glass-shadow);
+}
+.bp-modal-header {
+  background: transparent;
+  border-bottom: 1px solid var(--bp-glass-border);
+}
+.bp-modal-close {
+  flex-shrink: 0;
+}
+
+.bp-theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--bp-glass-bg);
+  border: 1px solid var(--bp-glass-border);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--bp-glass-shadow);
+  cursor: pointer;
+  position: relative;
+}
+.bp-theme-icon { width: 16px; height: 16px; color: var(--bp-text-dim); }
+.bp-theme-knob {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--bp-accent);
+  display: inline-block;
+}
+
+.bp-nav-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--bp-text-dim);
+  cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
+}
+.bp-nav-btn:hover { background: var(--bp-accent-10); color: var(--bp-accent); }
+
+.bp-day-cell {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 24px;
+  background: var(--bp-cell-bg);
+  border: 1px solid var(--bp-cell-border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(.2,.85,.25,1), box-shadow 0.35s ease, border-color 0.35s ease;
+  animation: bp-rise 0.5s cubic-bezier(.2,.85,.25,1) backwards;
+}
+.bp-day-cell::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: 24px;
+  background: radial-gradient(circle at 50% 0%, transparent, transparent 70%);
+  transition: background 0.4s ease;
+  pointer-events: none;
+}
+.bp-day-cell:hover:not(:disabled)::before {
+  background: radial-gradient(circle at 50% 0%, var(--bp-accent-10), transparent 70%);
+}
+.bp-day-cell:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.04);
+  border-color: rgba(199, 110, 61, 0.45);
+  box-shadow: 0 10px 24px rgba(199, 110, 61, 0.18);
+}
+.bp-day-cell:disabled { opacity: 0.4; cursor: not-allowed; }
+.bp-day-selected {
+  border-color: var(--bp-accent) !important;
+  box-shadow: 0 0 0 2px var(--bp-accent-10), 0 10px 24px rgba(199, 110, 61, 0.2) !important;
+  transform: scale(1.02);
+}
+.bp-day-confirmed { border-color: var(--bp-accent) !important; }
+.bp-day-num {
+  font-family: var(--bp-font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--bp-text);
+}
+.bp-day-label {
+  display: none;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  margin-top: 4px;
+}
+@media (min-width: 640px) {
+  .bp-day-label { display: block; }
+}
+
+@keyframes bp-rise {
+  from { opacity: 0; transform: translateY(10px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.bp-progress-track {
+  height: 3px;
+  background: var(--bp-glass-border);
+  width: 100%;
+  flex-shrink: 0;
+}
+.bp-progress-fill {
+  height: 100%;
+  background: var(--bp-accent);
+  transition: width 0.4s cubic-bezier(.2,.85,.25,1);
+}
+
+.bp-step-enter { animation: bp-step-in 0.32s cubic-bezier(.2,.85,.25,1) backwards; }
+@keyframes bp-step-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.bp-option-card {
+  padding: 24px;
+  border-radius: 24px;
+  border: 2px solid var(--bp-glass-border);
+  background: var(--bp-glass-bg);
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(.2,.85,.25,1), border-color 0.25s ease, box-shadow 0.25s ease;
+  animation: bp-rise 0.4s cubic-bezier(.2,.85,.25,1) backwards;
+}
+.bp-option-card:hover {
+  transform: translateX(4px);
+  border-color: rgba(199, 110, 61, 0.4);
+  box-shadow: 0 8px 20px rgba(199, 110, 61, 0.12);
+}
+.bp-option-selected {
+  border-color: var(--bp-accent) !important;
+  background: var(--bp-accent-10) !important;
+}
+
+.bp-time-slot {
+  height: 64px;
+  border-radius: 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  background: var(--bp-glass-bg);
+  border: 1px solid var(--bp-glass-border);
+  color: var(--bp-text);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  animation: bp-rise 0.35s cubic-bezier(.2,.85,.25,1) backwards;
+}
+.bp-time-slot:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--bp-accent);
+}
+.bp-time-selected {
+  background: var(--bp-accent) !important;
+  border-color: var(--bp-accent) !important;
+  color: #faf3ec !important;
+}
+.bp-time-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.bp-warning-box {
+  background: var(--bp-warning-bg);
+  border: 1px solid var(--bp-accent-10);
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+}
+
+.bp-input {
+  background: var(--bp-glass-bg) !important;
+  border: 1px solid var(--bp-glass-border) !important;
+  color: var(--bp-text) !important;
+}
+.bp-input:focus {
+  border-color: var(--bp-accent) !important;
+}
+
+.bp-submit-btn {
+  background: var(--bp-accent);
+  color: #faf3ec;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(199, 110, 61, 0.3);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.bp-submit-btn:hover:not(:disabled) { background: var(--bp-accent-hover); }
+.bp-submit-btn:active:not(:disabled) { transform: scale(0.98); }
+.bp-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.bp-modal-scrollbar::-webkit-scrollbar { width: 6px; }
+.bp-modal-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--bp-glass-border);
+  border-radius: 999px;
+}
+
+[data-sonner-toast].bp-toast {
+  background: var(--bp-glass-bg-strong) !important;
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid var(--bp-glass-border) !important;
+  box-shadow: inset 0 1px 0 var(--bp-glass-highlight), var(--bp-glass-shadow) !important;
+  border-radius: 20px !important;
+  padding: 16px 18px !important;
+  font-family: var(--bp-font-body);
+}
+[data-sonner-toast].bp-toast [data-title] {
+  color: var(--bp-text) !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+}
+[data-sonner-toast].bp-toast [data-description] {
+  color: var(--bp-text-dim) !important;
+  font-size: 0.85rem !important;
+}
+[data-sonner-toast].bp-toast [data-icon] {
+  display: flex;
+  align-items: center;
+}
+[data-sonner-toast].bp-toast-success [data-icon] .bp-toast-icon {
+  color: var(--bp-accent);
+}
+[data-sonner-toast].bp-toast-error [data-icon] .bp-toast-icon {
+  color: #c0524a;
+}
+.bp-toast-icon { width: 20px; height: 20px; }
+[data-sonner-toast].bp-toast [data-close-button] {
+  background: var(--bp-glass-bg) !important;
+  border: 1px solid var(--bp-glass-border) !important;
+  color: var(--bp-text-dim) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bp-day-cell, .bp-option-card, .bp-time-slot, .bp-step-enter {
+    animation: none !important;
+    transition: none !important;
+  }
 }

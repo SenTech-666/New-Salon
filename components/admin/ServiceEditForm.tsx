@@ -88,23 +88,23 @@ export default function ServiceEditForm({
   return (
     <div className="space-y-6">
       {/* Основные поля */}
-      <div className="bg-white rounded-3xl border border-slate-100 p-8 space-y-5">
+      <div className="bg-card rounded-3xl border border-border p-8 space-y-5">
         <div>
-          <label className="text-sm font-medium text-slate-700 mb-1.5 block">Название *</label>
+          <label className="text-sm font-medium text-card-foreground/80 mb-1.5 block">Название *</label>
           <input
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
             placeholder="Маникюр классика"
-            className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a] transition-colors"
+            className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
           />
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700 mb-1.5 block">Мастер</label>
+          <label className="text-sm font-medium text-card-foreground/80 mb-1.5 block">Мастер</label>
           <select
             value={form.master_id}
             onChange={(e) => set('master_id', e.target.value)}
-            className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm bg-white focus:outline-none focus:border-[#c9a08a] transition-colors"
+            className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
           >
             <option value="">Без привязки к мастеру</option>
             {masters.map((m) => (
@@ -117,25 +117,25 @@ export default function ServiceEditForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-1.5 block">Длительность (мин) *</label>
+            <label className="text-sm font-medium text-card-foreground/80 mb-1.5 block">Длительность (мин) *</label>
             <input
               type="number"
               min={5}
               step={5}
               value={form.duration}
               onChange={(e) => set('duration', Number(e.target.value))}
-              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a] transition-colors"
+              className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-1.5 block">Цена (₽) *</label>
+            <label className="text-sm font-medium text-card-foreground/80 mb-1.5 block">Цена (₽) *</label>
             <input
               type="number"
               min={0}
               step={50}
               value={form.price}
               onChange={(e) => set('price', Number(e.target.value))}
-              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a] transition-colors"
+              className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
             />
           </div>
         </div>
@@ -145,16 +145,16 @@ export default function ServiceEditForm({
             type="button"
             onClick={() => set('is_active', !form.is_active)}
             className={`w-11 h-6 rounded-full transition-colors relative ${
-              form.is_active ? 'bg-[#c9a08a]' : 'bg-slate-200'
+              form.is_active ? 'bg-primary' : 'bg-muted'
             }`}
           >
             <span
-              className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+              className={`absolute top-1 w-4 h-4 bg-card rounded-full shadow transition-transform ${
                 form.is_active ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
           </button>
-          <span className="text-sm text-slate-600">
+          <span className="text-sm text-card-foreground/80">
             {form.is_active ? 'Активна — доступна для записи' : 'Неактивна — скрыта на сайте'}
           </span>
         </div>
@@ -163,13 +163,13 @@ export default function ServiceEditForm({
           <button
             onClick={handleSubmit}
             disabled={loading || !supabase}
-            className="flex-1 h-12 bg-[#c9a08a] hover:bg-[#b38f79] text-white rounded-2xl font-medium text-sm transition-all disabled:opacity-60"
+            className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-medium text-sm transition-all disabled:opacity-60"
           >
             {loading ? 'Сохраняем...' : 'Сохранить изменения'}
           </button>
           <Link
             href="/admin/services"
-            className="h-12 px-6 border border-slate-200 text-slate-600 rounded-2xl font-medium text-sm transition-all hover:bg-slate-50 flex items-center"
+            className="h-12 px-6 border border-border text-card-foreground/80 rounded-2xl font-medium text-sm transition-all hover:bg-muted flex items-center"
           >
             Отмена
           </Link>

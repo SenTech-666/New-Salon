@@ -21,10 +21,10 @@ type Booking = {
 };
 
 const statusConfig: Record<string, { label: string; cls: string }> = {
-  pending:   { label: 'Ожидает',      cls: 'bg-amber-50 text-amber-600' },
-  confirmed: { label: 'Подтверждено', cls: 'bg-emerald-50 text-emerald-600' },
-  completed: { label: 'Завершено',    cls: 'bg-blue-50 text-blue-600' },
-  cancelled: { label: 'Отменено',     cls: 'bg-red-50 text-red-500' },
+  pending:   { label: 'Ожидает',      cls: 'bg-accent text-accent-foreground' },
+  confirmed: { label: 'Подтверждено', cls: 'bg-success/15 text-success' },
+  completed: { label: 'Завершено',    cls: 'bg-blue-500/15 text-blue-500 dark:text-blue-400' },
+  cancelled: { label: 'Отменено',     cls: 'bg-destructive/15 text-destructive' },
 };
 
 export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
@@ -62,48 +62,48 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
 
   if (bookings.length === 0) {
     return (
-      <div className="bg-white rounded-3xl border border-slate-100 p-16 text-center">
-        <p className="text-slate-400">Записей не найдено</p>
+      <div className="bg-card rounded-3xl border border-border p-16 text-center">
+        <p className="text-muted-foreground">Записей не найдено</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden">
+      <div className="bg-card rounded-3xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="text-left px-6 py-4 text-xs font-medium text-slate-400 uppercase tracking-wider">Клиент</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-slate-400 uppercase tracking-wider">Мастер</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-slate-400 uppercase tracking-wider">Услуга</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-slate-400 uppercase tracking-wider">Дата и время</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-slate-400 uppercase tracking-wider">Статус</th>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="text-left px-6 py-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Клиент</th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Мастер</th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Услуга</th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Дата и время</th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Статус</th>
                 <th className="px-6 py-4"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-border/60">
               {bookings.map((b) => {
-                const st = statusConfig[b.status] ?? { label: b.status, cls: 'bg-slate-50 text-slate-500' };
+                const st = statusConfig[b.status] ?? { label: b.status, cls: 'bg-muted text-muted-foreground' };
                 return (
-                  <tr key={b.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={b.id} className="hover:bg-muted/50 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="font-medium text-slate-900 text-sm">{b.client_name}</p>
+                      <p className="font-medium text-card-foreground text-sm">{b.client_name}</p>
                       <a
                         href={`tel:${b.client_phone}`}
-                        className="text-xs text-slate-400 hover:text-[#c9a08a] flex items-center gap-1 mt-0.5"
+                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mt-0.5"
                       >
                         <Phone className="w-3 h-3" />
                         {b.client_phone}
                       </a>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-slate-700">{b.masters?.name ?? '—'}</p>
+                      <p className="text-sm text-card-foreground/80">{b.masters?.name ?? '—'}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-slate-700">{b.services?.name ?? '—'}</p>
-                      <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                      <p className="text-sm text-card-foreground/80">{b.services?.name ?? '—'}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {b.services?.duration} мин
                         {' / '}
@@ -111,8 +111,8 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                       </p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-slate-700">{b.date}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{b.time}</p>
+                      <p className="text-sm text-card-foreground/80">{b.date}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{b.time}</p>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${st.cls}`}>
@@ -126,7 +126,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                             onClick={() => updateStatus(b.id, 'confirmed')}
                             disabled={loading === b.id || !supabase}
                             title="Подтвердить"
-                            className="w-8 h-8 rounded-xl hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center"
+                            className="w-8 h-8 rounded-xl hover:bg-success/15 text-muted-foreground hover:text-success transition-all flex items-center justify-center"
                           >
                             <CheckCircle className="w-4 h-4" />
                           </button>
@@ -136,7 +136,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                             onClick={() => setRescheduling(b)}
                             disabled={loading === b.id}
                             title="Перенести"
-                            className="w-8 h-8 rounded-xl hover:bg-[#fdf7f0] text-slate-400 hover:text-[#c9a08a] transition-all flex items-center justify-center"
+                            className="w-8 h-8 rounded-xl hover:bg-accent text-muted-foreground hover:text-primary transition-all flex items-center justify-center"
                           >
                             <CalendarClock className="w-4 h-4" />
                           </button>
@@ -146,7 +146,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                             onClick={() => updateStatus(b.id, 'cancelled')}
                             disabled={loading === b.id || !supabase}
                             title="Отменить"
-                            className="w-8 h-8 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all flex items-center justify-center"
+                            className="w-8 h-8 rounded-xl hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-all flex items-center justify-center"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -156,7 +156,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                             onClick={() => updateStatus(b.id, 'pending')}
                             disabled={loading === b.id || !supabase}
                             title="Восстановить"
-                            className="w-8 h-8 rounded-xl hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-all flex items-center justify-center"
+                            className="w-8 h-8 rounded-xl hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-all flex items-center justify-center"
                           >
                             <RotateCcw className="w-4 h-4" />
                           </button>
@@ -166,14 +166,14 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                             onClick={() => updateStatus(b.id, 'completed')}
                             disabled={loading === b.id || !supabase}
                             title="Завершить"
-                            className="w-8 h-8 rounded-xl hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center text-xs font-bold"
+                            className="w-8 h-8 rounded-xl hover:bg-blue-500/15 text-muted-foreground hover:text-blue-500 dark:hover:text-blue-400 transition-all flex items-center justify-center text-xs font-bold"
                           >
                             OK
                           </button>
                         )}
                         <a
                           href={`/admin/bookings/${b.id}/edit`}
-                          className="w-8 h-8 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center"
+                          className="w-8 h-8 rounded-xl hover:bg-muted text-muted-foreground hover:text-card-foreground transition-all flex items-center justify-center"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </a>
@@ -181,7 +181,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                           onClick={() => deleteBooking(b.id)}
                           disabled={loading === b.id || !supabase}
                           title="Удалить"
-                          className="w-8 h-8 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-400 transition-all flex items-center justify-center"
+                          className="w-8 h-8 rounded-xl hover:bg-destructive/15 text-muted-foreground/70 hover:text-destructive transition-all flex items-center justify-center"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -352,17 +352,17 @@ function RescheduleModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-card rounded-3xl w-full max-w-md overflow-hidden">
+        <div className="px-6 py-5 border-b border-border flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">Перенос записи</h3>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <h3 className="text-lg font-semibold text-card-foreground">Перенос записи</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">
               {booking.client_name} · {booking.masters?.name ?? '—'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400"
+            className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground"
           >
             <X className="w-4 h-4" />
           </button>
@@ -370,27 +370,27 @@ function RescheduleModal({
 
         <div className="px-6 py-6 space-y-5">
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-2 block">Новая дата</label>
+            <label className="text-sm font-medium text-card-foreground mb-2 block">Новая дата</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               min={new Date().toISOString().split('T')[0]}
-              className="w-full h-11 px-4 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+              className="w-full h-11 px-4 rounded-2xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-2 block">Новое время</label>
+            <label className="text-sm font-medium text-card-foreground mb-2 block">Новое время</label>
 
             {loadingSlots ? (
-              <p className="text-sm text-slate-400 py-4 text-center">Проверка занятости...</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">Проверка занятости...</p>
             ) : fullDayBlock ? (
-              <div className="bg-red-50 text-red-600 text-sm rounded-2xl p-4 text-center">
+              <div className="bg-destructive/15 text-destructive text-sm rounded-2xl p-4 text-center">
                 {fullDayBlock}
               </div>
             ) : availableSlots.length === 0 ? (
-              <p className="text-sm text-slate-400 py-4 text-center">
+              <p className="text-sm text-muted-foreground py-4 text-center">
                 Нет свободного времени с учётом длительности услуги
               </p>
             ) : (
@@ -406,12 +406,12 @@ function RescheduleModal({
                       onClick={() => !blocked && setSelectedTime(slot)}
                       className={`h-11 rounded-xl text-sm font-medium transition-all ${
                         blocked
-                          ? 'bg-red-100 border border-red-200 text-red-300 cursor-not-allowed'
+                          ? 'bg-destructive/15 border border-destructive/30 text-destructive/50 cursor-not-allowed'
                           : selectedTime === slot
-                          ? 'bg-[#c9a08a] text-white'
+                          ? 'bg-primary text-primary-foreground'
                           : isCurrentSlot
-                          ? 'border-2 border-[#c9a08a] text-[#c9a08a]'
-                          : 'border border-slate-200 text-slate-600 hover:border-[#c9a08a]'
+                          ? 'border-2 border-primary text-primary'
+                          : 'border border-border text-muted-foreground hover:border-primary'
                       }`}
                     >
                       {slot}
@@ -424,17 +424,17 @@ function RescheduleModal({
           </div>
         </div>
 
-        <div className="px-6 py-5 border-t border-slate-100 flex gap-3">
+        <div className="px-6 py-5 border-t border-border flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 h-11 rounded-2xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition-all"
+            className="flex-1 h-11 rounded-2xl border border-border text-muted-foreground text-sm font-medium hover:bg-muted transition-all"
           >
             Отмена
           </button>
           <button
             onClick={handleSave}
             disabled={saving || !selectedTime || !!fullDayBlock || !supabase}
-            className="flex-1 h-11 rounded-2xl bg-[#c9a08a] hover:bg-[#b38f79] text-white text-sm font-medium transition-all disabled:opacity-50"
+            className="flex-1 h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-all disabled:opacity-50"
           >
             {saving ? 'Сохраняем...' : 'Перенести'}
           </button>

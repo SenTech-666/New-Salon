@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ChevronLeft, ChevronRight, Clock, User, Scissors } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, User, Scissors, Moon, Sun, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { generateTimeSlots, dayOfWeekFromDateString } from '@/lib/scheduling';
+import { useTheme } from '@/components/theme/theme-provider';
 
 type Master = {
   id: string;
@@ -74,6 +74,11 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notFoundSalon, setNotFoundSalon] = useState(false);
 
+  // Тема теперь живёт в общем ThemeProvider (components/theme/theme-provider.tsx),
+  // а не как локальный useState — так переключение синхронизировано со всем
+  // проектом (admin, master, owner), а не только с этой страницей.
+  const { theme, toggleTheme } = useTheme();
+
   // Резолвится один раз через get_public_salon_by_slug. salonId нужен
   // явно при INSERT в bookings — RLS на bookings_insert теперь проверяет
   // реальный существующий salon_id, а не "угадывает" текущий салон через
@@ -132,7 +137,10 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
         setServices(servicesRes.data ?? []);
       } catch (error: any) {
         console.error('Ошибка загрузки данных салона:', error);
-        toast.error('Не удалось загрузить данные');
+        toast.error('Не удалось загрузить данные', {
+          className: 'bp-toast bp-toast-error',
+          icon: <AlertCircle className="bp-toast-icon" />,
+        });
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -298,7 +306,10 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
         setTakenSlots(taken);
       } catch (error: any) {
         console.error('Ошибка загрузки занятости:', error);
-        toast.error('Не удалось проверить занятость мастера');
+        toast.error('Не удалось проверить занятость мастера', {
+          className: 'bp-toast bp-toast-error',
+          icon: <AlertCircle className="bp-toast-icon" />,
+        });
       } finally {
         if (isMounted) setLoadingSlots(false);
       }
@@ -398,9 +409,18 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
     }
   };
 
+  // Закрытие модалки — единая точка, чтобы крестик и Dialog всегда
+  // закрывались одинаково (через onOpenChange), без рассинхрона состояния.
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
   const handleConfirmBooking = async () => {
     if (!salonId || !selectedDate || !selectedMaster || !selectedService || !selectedTime || !clientName.trim() || !clientPhone.trim()) {
-      toast.error('Пожалуйста, заполните все поля');
+      toast.error('Пожалуйста, заполните все поля', {
+        className: 'bp-toast bp-toast-error',
+        icon: <AlertCircle className="bp-toast-icon" />,
+      });
       return;
     }
 
@@ -426,6 +446,8 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
       toast.success('Запись успешно создана!', {
         description: `${selectedDate} ${monthNames[currentMonth]} ${currentYear} • ${selectedTime}`,
         duration: 6000,
+        className: 'bp-toast bp-toast-success',
+        icon: <CheckCircle2 className="bp-toast-icon" />,
       });
 
       setSelectedMaster('');
@@ -435,32 +457,50 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
       setClientPhone('');
     } catch (error: any) {
       console.error(error);
-      toast.error('Ошибка при записи', { description: error.message || 'Попробуйте позже' });
+      toast.error('Ошибка при записи', {
+        description: error.message || 'Попробуйте позже',
+        className: 'bp-toast bp-toast-error',
+        icon: <AlertCircle className="bp-toast-icon" />,
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Шаги модалки в порядке прохождения — используется для прогресс-бара.
+  const stepOrder: Array<typeof currentStep> = ['masters', 'services', 'time', 'client'];
+  const stepIndex = stepOrder.indexOf(currentStep);
+
   if (notFoundSalon) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#faf8f5] via-[#f5f0eb] to-[#ede4d9]">
-        <p className="text-xl text-slate-600">Салон не найден</p>
+      <div className={`min-h-screen flex items-center justify-center bp-bg`}>
+        <p className="text-xl" style={{ color: 'var(--bp-text-dim)' }}>Салон не найден</p>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#faf8f5] via-[#f5f0eb] to-[#ede4d9]">
-        <p className="text-xl text-slate-600">Загрузка мастеров и услуг...</p>
+      <div className={`min-h-screen flex items-center justify-center bp-bg`}>
+        <p className="text-xl" style={{ color: 'var(--bp-text-dim)' }}>Загрузка мастеров и услуг...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf8f5] via-[#f5f0eb] to-[#ede4d9] pb-12 relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#c9a08a]/5 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-20 right-10 w-80 h-80 bg-[#c9a08a]/5 rounded-full blur-3xl -z-10" />
+    <div className={`min-h-screen bp-bg pb-12 relative overflow-hidden`}>
+
+      {/* Переключатель тёмная/светлая тема */}
+      <button
+        onClick={toggleTheme}
+        aria-label="Переключить тему"
+        className="bp-theme-toggle"
+        style={{ position: 'fixed', top: 20, right: 20, zIndex: 50 }}
+      >
+        <Moon className="bp-theme-icon bp-theme-icon-moon" />
+        <span className="bp-theme-knob" />
+        <Sun className="bp-theme-icon bp-theme-icon-sun" />
+      </button>
 
       <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
         <div className="pt-12 pb-10">
@@ -472,22 +512,22 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
                 className="w-20 h-20 rounded-2xl object-cover shadow-md flex-shrink-0"
               />
             ) : (
-              <div className="w-20 h-20 rounded-2xl bg-[#c9a08a]/15 flex items-center justify-center flex-shrink-0">
-                <span className="text-3xl font-bold text-[#c9a08a]">
+              <div className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--bp-accent-10)' }}>
+                <span className="text-3xl font-bold" style={{ color: 'var(--bp-accent)', fontFamily: 'var(--bp-font-display)' }}>
                   {salonInfo?.name?.[0] ?? '?'}
                 </span>
               </div>
             )}
             <div className="text-center sm:text-left">
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-slate-900">
+              <h1 className="text-4xl md:text-5xl font-semibold tracking-tight" style={{ color: 'var(--bp-text)', fontFamily: 'var(--bp-font-display)' }}>
                 {salonInfo?.name ?? 'Онлайн-запись'}
               </h1>
               {salonInfo?.description && (
-                <p className="text-slate-500 mt-1 text-lg">{salonInfo.description}</p>
+                <p className="mt-1 text-lg" style={{ color: 'var(--bp-text-dim)' }}>{salonInfo.description}</p>
               )}
               <div className="flex flex-wrap gap-4 mt-2 justify-center sm:justify-start">
                 {salonInfo?.address && (
-                  <span className="text-sm text-slate-400 flex items-center gap-1">
+                  <span className="text-sm flex items-center gap-1" style={{ color: 'var(--bp-text-faint)' }}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
@@ -498,7 +538,8 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
                 {salonInfo?.phone && (
                   <a
                     href={`tel:${salonInfo.phone}`}
-                    className="text-sm text-[#c9a08a] flex items-center gap-1 hover:text-[#b38f79] transition-colors"
+                    className="text-sm flex items-center gap-1 transition-colors"
+                    style={{ color: 'var(--bp-accent)' }}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 6.75z" />
@@ -511,21 +552,22 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
           </div>
         </div>
 
-        <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between pb-8 px-6 sm:px-10 pt-8">
-            <Button variant="ghost" size="icon" onClick={handlePrevMonth} className="h-11 w-11 rounded-full">
+        {/* Подложка календаря — стекло (glassmorphism) */}
+        <div className="bp-glass" style={{ borderRadius: 24, overflow: 'hidden' }}>
+          <div className="flex flex-row items-center justify-between px-6 sm:px-10 pt-8 pb-8">
+            <button onClick={handlePrevMonth} className="bp-nav-btn" aria-label="Предыдущий месяц">
               <ChevronLeft className="h-6 w-6" />
-            </Button>
-            <CardTitle className="text-3xl md:text-4xl font-semibold text-slate-900">
+            </button>
+            <h2 className="text-3xl md:text-4xl font-medium" style={{ color: 'var(--bp-text)', fontFamily: 'var(--bp-font-display)' }}>
               {monthNames[currentMonth]} {currentYear}
-            </CardTitle>
-            <Button variant="ghost" size="icon" onClick={handleNextMonth} className="h-11 w-11 rounded-full">
+            </h2>
+            <button onClick={handleNextMonth} className="bp-nav-btn" aria-label="Следующий месяц">
               <ChevronRight className="h-6 w-6" />
-            </Button>
-          </CardHeader>
+            </button>
+          </div>
 
-          <CardContent className="px-4 sm:px-8 pb-10">
-            <div className="grid grid-cols-7 gap-2 mb-6 text-center text-sm font-medium text-slate-500">
+          <div className="px-4 sm:px-8 pb-10">
+            <div className="grid grid-cols-7 gap-2 mb-6 text-center text-sm font-medium" style={{ color: 'var(--bp-text-dim)' }}>
               {['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'].map(d => <div key={d} className="py-1">{d}</div>)}
             </div>
 
@@ -533,84 +575,107 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
               {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
                 const { status } = getDayStatus(day);
                 const isSelected = selectedDate === day;
+                const isDisabled = status === 'past' || status === 'beyond';
 
                 return (
-                  <div
+                  <button
                     key={day}
                     onClick={() => handleDayClick(day)}
-                    className={`aspect-square rounded-3xl border flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95 hover:shadow-xl bg-white
-                      ${status === 'past' || status === 'beyond' ? 'opacity-40 cursor-not-allowed' : 'hover:border-slate-200'}
-                      ${isSelected ? 'border-[#c9a08a] shadow-lg scale-[1.02]' : 'border-slate-100'}
-                    `}
+                    disabled={isDisabled}
+                    className={`bp-day-cell ${isSelected ? 'bp-day-selected' : ''} ${status === 'confirmed' ? 'bp-day-confirmed' : ''}`}
+                    style={{ animationDelay: `${day * 10}ms` }}
                   >
-                    <span className="text-3xl sm:text-4xl font-semibold text-slate-800">{day}</span>
-                    <span className="hidden sm:block text-[10px] font-medium mt-1 tracking-wide">
-                      {status === 'past' && <span className="text-slate-400">Прошёл</span>}
-                      {status === 'beyond' && <span className="text-slate-400">Недоступно</span>}
-                      {status === 'confirmed' && <span className="text-[#c9a08a] font-semibold">Ваша</span>}
-                      {status === 'free' && <span className="text-emerald-600">Свободно</span>}
+                    <span className="bp-day-num">{day}</span>
+                    <span className="bp-day-label">
+                      {status === 'past' && <span style={{ color: 'var(--bp-text-faint)' }}>Прошёл</span>}
+                      {status === 'beyond' && <span style={{ color: 'var(--bp-text-faint)' }}>Недоступно</span>}
+                      {status === 'confirmed' && <span style={{ color: 'var(--bp-accent)', fontWeight: 600 }}>Ваша</span>}
+                      {status === 'free' && <span style={{ color: 'var(--bp-success)' }}>Свободно</span>}
                     </span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-lg w-[95%] max-h-[92vh] overflow-hidden rounded-3xl p-0 bg-[#fdf7f0] border border-[#c9a08a]/20 flex flex-col">
-          <DialogHeader className="sticky top-0 bg-[#fdf7f0]/95 backdrop-blur-lg z-10 border-b border-[#c9a08a]/10 px-6 py-5 flex flex-row items-center gap-3 shrink-0">
-            {currentStep !== 'masters' && (
-              <Button variant="ghost" size="icon" onClick={handleBack} className="h-10 w-10 rounded-full">
+        {/* Модалка — тоже стекло, плюс прогресс-бар шагов и slide+fade переход контента.
+            showCloseButton={false} убирает дефолтный крестик shadcn — он рендерится
+            absolute right-4 top-4 внутри DialogContent и физически перекрывался нашим
+            sticky-хедером, из-за чего клики до него не доходили. Вместо него — наша
+            явная кнопка ниже, в потоке документа, гарантированно кликабельная. */}
+        <DialogContent
+          showCloseButton={false}
+          className={`bp-modal max-w-lg w-[95%] max-h-[92vh] overflow-hidden rounded-3xl p-0 flex flex-col`}
+        >
+          <DialogHeader className="bp-modal-header sticky top-0 z-10 px-6 py-5 flex flex-row items-center gap-3 shrink-0">
+            {currentStep !== 'masters' ? (
+              <button onClick={handleBack} className="bp-nav-btn" style={{ width: 40, height: 40 }} aria-label="Назад">
                 <ChevronLeft className="h-5 w-5" />
-              </Button>
+              </button>
+            ) : (
+              <span style={{ width: 40, height: 40, flexShrink: 0 }} aria-hidden="true" />
             )}
             <div className="flex-1 text-center">
-              <DialogTitle className="text-2xl font-semibold text-slate-900">
+              <DialogTitle className="text-2xl font-semibold" style={{ color: 'var(--bp-text)', fontFamily: 'var(--bp-font-display)' }}>
                 {selectedDate} {monthNames[currentMonth]} {currentYear}
               </DialogTitle>
-              <DialogDescription className="text-slate-500 text-sm mt-1">
+              <DialogDescription className="text-sm mt-1" style={{ color: 'var(--bp-text-dim)' }}>
                 Запись за 30 секунд
               </DialogDescription>
             </div>
+            <button
+              onClick={handleCloseModal}
+              className="bp-nav-btn bp-modal-close"
+              style={{ width: 40, height: 40 }}
+              aria-label="Закрыть"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto modal-scrollbar p-6 sm:p-8">
-            <div className="space-y-10">
+          {/* Прогресс-бар: заливается акцентом по мере прохождения шагов */}
+          <div className="bp-progress-track">
+            <div className="bp-progress-fill" style={{ width: `${((stepIndex + 1) / stepOrder.length) * 100}%` }} />
+          </div>
+
+          <div className="flex-1 overflow-y-auto bp-modal-scrollbar p-6 sm:p-8">
+            <div key={currentStep} className="bp-step-enter space-y-10">
               {currentStep === 'masters' && (
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-[#c9a08a]/10 flex items-center justify-center">
-                      <User className="w-5 h-5 text-[#c9a08a]" />
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'var(--bp-accent-10)' }}>
+                      <User className="w-5 h-5" style={{ color: 'var(--bp-accent)' }} />
                     </div>
-                    <h3 className="text-2xl font-semibold text-slate-900">Выберите мастера</h3>
+                    <h3 className="text-2xl font-semibold" style={{ color: 'var(--bp-text)' }}>Выберите мастера</h3>
                   </div>
 
                   {loadingMasterAvailability ? (
-                    <p className="text-center text-slate-400 py-8">Проверяем доступность мастеров...</p>
+                    <p className="text-center py-8" style={{ color: 'var(--bp-text-faint)' }}>Проверяем доступность мастеров...</p>
                   ) : (
                     <div className="space-y-4">
                       {masters
                         .filter((master) => !unavailableMasterIds.has(master.id))
-                        .map((master) => (
+                        .map((master, i) => (
                           <div
                             key={master.id}
                             onClick={() => handleMasterSelect(master.id)}
-                            className={`p-6 rounded-3xl border-2 transition-all cursor-pointer hover:shadow-xl bg-white
-                              ${selectedMaster === master.id ? 'border-[#c9a08a] bg-[#c9a08a]/5 shadow' : 'border-slate-100 hover:border-slate-200'}`}
+                            className={`bp-option-card ${selectedMaster === master.id ? 'bp-option-selected' : ''}`}
+                            style={{ animationDelay: `${i * 60}ms` }}
                           >
-                            <p className="font-semibold text-xl">{master.name}</p>
-                            <p className="text-slate-500 mt-1">{master.specialty}</p>
+                            <p className="font-semibold text-xl" style={{ color: 'var(--bp-text)' }}>{master.name}</p>
+                            <p className="mt-1" style={{ color: 'var(--bp-text-dim)' }}>{master.specialty}</p>
                           </div>
                         ))}
 
                       {masters.filter((m) => !unavailableMasterIds.has(m.id)).length === 0 && (
-                        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 text-center">
-                          <p className="text-amber-700 font-medium">
+                        <div className="bp-warning-box">
+                          <p className="font-medium" style={{ color: 'var(--bp-warning-text)' }}>
                             В этот день никто из мастеров не работает
                           </p>
-                          <p className="text-slate-500 text-sm mt-2">
+                          <p className="text-sm mt-2" style={{ color: 'var(--bp-text-dim)' }}>
                             Выберите другую дату
                           </p>
                         </div>
@@ -623,25 +688,25 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
               {currentStep === 'services' && (
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-[#c9a08a]/10 flex items-center justify-center">
-                      <Scissors className="w-5 h-5 text-[#c9a08a]" />
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'var(--bp-accent-10)' }}>
+                      <Scissors className="w-5 h-5" style={{ color: 'var(--bp-accent)' }} />
                     </div>
-                    <h3 className="text-2xl font-semibold text-slate-900">Выберите услугу</h3>
+                    <h3 className="text-2xl font-semibold" style={{ color: 'var(--bp-text)' }}>Выберите услугу</h3>
                   </div>
                   <div className="space-y-4">
-                    {services.map((service) => (
+                    {services.map((service, i) => (
                       <div
                         key={service.id}
                         onClick={() => handleServiceSelect(service.id)}
-                        className={`p-6 rounded-3xl border-2 transition-all cursor-pointer hover:shadow-xl bg-white
-                          ${selectedService === service.id ? 'border-[#c9a08a] bg-[#c9a08a]/5 shadow' : 'border-slate-100 hover:border-slate-200'}`}
+                        className={`bp-option-card ${selectedService === service.id ? 'bp-option-selected' : ''}`}
+                        style={{ animationDelay: `${i * 60}ms` }}
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className="font-semibold text-xl">{service.name}</p>
-                            <p className="text-slate-500">{service.duration} мин</p>
+                            <p className="font-semibold text-xl" style={{ color: 'var(--bp-text)' }}>{service.name}</p>
+                            <p style={{ color: 'var(--bp-text-dim)' }}>{service.duration} мин</p>
                           </div>
-                          <p className="font-semibold text-xl text-[#c9a08a]">{service.price} ₽</p>
+                          <p className="font-semibold text-xl" style={{ color: 'var(--bp-accent)' }}>{service.price} ₽</p>
                         </div>
                       </div>
                     ))}
@@ -652,46 +717,41 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
               {currentStep === 'time' && (
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-[#c9a08a]/10 flex items-center justify-center">
-                      <Clock className="w-5 h-5 text-[#c9a08a]" />
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'var(--bp-accent-10)' }}>
+                      <Clock className="w-5 h-5" style={{ color: 'var(--bp-accent)' }} />
                     </div>
-                    <h3 className="text-2xl font-semibold text-slate-900">Выберите время</h3>
+                    <h3 className="text-2xl font-semibold" style={{ color: 'var(--bp-text)' }}>Выберите время</h3>
                   </div>
 
                   {loadingSlots ? (
-                    <p className="text-center text-slate-400 py-8">Проверяем занятость мастера...</p>
+                    <p className="text-center py-8" style={{ color: 'var(--bp-text-faint)' }}>Проверяем занятость мастера...</p>
                   ) : fullDayBlocked || availableTimeSlots.length === 0 ? (
-                    <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 text-center">
-                      <p className="text-amber-700 font-medium">
+                    <div className="bp-warning-box">
+                      <p className="font-medium" style={{ color: 'var(--bp-warning-text)' }}>
                         Мастер не работает в этот день
                       </p>
                       {fullDayReason && (
-                        <p className="text-amber-600 text-sm mt-1">{fullDayReason}</p>
+                        <p className="text-sm mt-1" style={{ color: 'var(--bp-warning-text)' }}>{fullDayReason}</p>
                       )}
-                      <p className="text-slate-500 text-sm mt-3">
+                      <p className="text-sm mt-3" style={{ color: 'var(--bp-text-dim)' }}>
                         Выберите другую дату или мастера
                       </p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                      {availableTimeSlots.map((time) => {
+                      {availableTimeSlots.map((time, i) => {
                         const isUnavailable = blockedTimeSlots.has(time) || takenSlots.has(time);
+                        const isSelected = selectedTime === time;
                         return (
-                          <Button
+                          <button
                             key={time}
-                            variant={selectedTime === time ? "default" : "outline"}
                             onClick={() => handleTimeSelect(time)}
                             disabled={isUnavailable}
-                            className={`h-16 text-base font-medium rounded-2xl transition-all ${
-                              selectedTime === time ? 'bg-[#c9a08a] hover:bg-[#b38f79]' : ''
-                            } ${
-                              isUnavailable
-                                ? 'cursor-not-allowed border-red-200 bg-red-100 text-red-300 hover:bg-red-100 hover:text-red-300'
-                                : ''
-                            }`}
+                            className={`bp-time-slot ${isSelected ? 'bp-time-selected' : ''} ${isUnavailable ? 'bp-time-disabled' : ''}`}
+                            style={{ animationDelay: `${i * 30}ms` }}
                           >
                             {time}
-                          </Button>
+                          </button>
                         );
                       })}
                     </div>
@@ -702,40 +762,40 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
               {currentStep === 'client' && (
                 <div className="space-y-8">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-[#c9a08a]/10 flex items-center justify-center">
-                      <User className="w-5 h-5 text-[#c9a08a]" />
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'var(--bp-accent-10)' }}>
+                      <User className="w-5 h-5" style={{ color: 'var(--bp-accent)' }} />
                     </div>
-                    <h3 className="text-2xl font-semibold text-slate-900">Ваши данные</h3>
+                    <h3 className="text-2xl font-semibold" style={{ color: 'var(--bp-text)' }}>Ваши данные</h3>
                   </div>
 
                   <div className="space-y-6">
                     <div>
-                      <Label className="text-slate-600">Имя и фамилия</Label>
+                      <Label style={{ color: 'var(--bp-text-dim)' }}>Имя и фамилия</Label>
                       <Input
                         placeholder="Анна Иванова"
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
-                        className="mt-2 h-14 rounded-2xl text-lg"
+                        className="bp-input mt-2 h-14 rounded-2xl text-lg"
                       />
                     </div>
                     <div>
-                      <Label className="text-slate-600">Телефон</Label>
+                      <Label style={{ color: 'var(--bp-text-dim)' }}>Телефон</Label>
                       <Input
                         placeholder="+7 (999) 123-45-67"
                         value={clientPhone}
                         onChange={(e) => setClientPhone(e.target.value)}
-                        className="mt-2 h-14 rounded-2xl text-lg"
+                        className="bp-input mt-2 h-14 rounded-2xl text-lg"
                       />
                     </div>
                   </div>
 
-                  <Button
+                  <button
                     onClick={handleConfirmBooking}
                     disabled={isSubmitting || !clientName.trim() || !clientPhone.trim()}
-                    className="w-full h-16 text-xl font-semibold rounded-3xl bg-[#c9a08a] hover:bg-[#b38f79] shadow-xl transition-all active:scale-[0.985]"
+                    className="bp-submit-btn w-full h-16 text-xl font-semibold rounded-3xl"
                   >
                     {isSubmitting ? 'Записываем...' : 'Подтвердить запись'}
-                  </Button>
+                  </button>
                 </div>
               )}
             </div>

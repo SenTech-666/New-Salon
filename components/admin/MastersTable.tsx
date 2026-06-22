@@ -75,11 +75,11 @@ export default function MastersTable({ masters }: { masters: Master[] }) {
 
   if (masters.length === 0) {
     return (
-      <div className="bg-white rounded-3xl border border-slate-100 p-16 text-center">
-        <p className="text-slate-400 mb-4">Мастеров пока нет</p>
+      <div className="bg-card rounded-3xl border border-border p-16 text-center">
+        <p className="text-muted-foreground mb-4">Мастеров пока нет</p>
         <Link
           href="/admin/masters/new"
-          className="text-sm text-[#c9a08a] hover:underline"
+          className="text-sm text-primary hover:underline"
         >
           Добавить первого мастера
         </Link>
@@ -93,23 +93,23 @@ export default function MastersTable({ masters }: { masters: Master[] }) {
         {masters.map(m => (
           <div
             key={m.id}
-            className={`bg-white rounded-3xl border p-6 flex items-center justify-between transition-all ${
-              m.is_active ? 'border-slate-100' : 'border-slate-100 opacity-60'
+            className={`bg-card rounded-3xl border p-6 flex items-center justify-between transition-all ${
+              m.is_active ? 'border-border' : 'border-border opacity-60'
             }`}
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#fdf7f0] flex items-center justify-center text-[#c9a08a] font-bold text-lg">
+              <div className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center text-primary font-bold text-lg">
                 {m.name.charAt(0)}
               </div>
               <div>
-                <p className="font-semibold text-slate-900">{m.name}</p>
-                <p className="text-sm text-slate-400 mt-0.5">{m.specialty ?? 'Специальность не указана'}</p>
+                <p className="font-semibold text-card-foreground">{m.name}</p>
+                <p className="text-sm text-muted-foreground mt-0.5">{m.specialty ?? 'Специальность не указана'}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <span className={`text-xs px-3 py-1 rounded-full font-medium ${
-                m.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                m.is_active ? 'bg-success/15 text-success' : 'bg-muted text-muted-foreground'
               }`}>
                 {m.is_active ? 'Активен' : 'Неактивен'}
               </span>
@@ -118,14 +118,14 @@ export default function MastersTable({ masters }: { masters: Master[] }) {
                 onClick={() => generateInvite(m.id, m.name)}
                 disabled={generatingFor === m.id || !supabase}
                 title="Пригласить в личный кабинет"
-                className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:text-[#c9a08a] hover:border-[#c9a08a]/30 hover:bg-[#fdf7f0] transition-all disabled:opacity-50"
+                className="w-9 h-9 rounded-xl border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-accent transition-all disabled:opacity-50"
               >
                 <UserPlus className="w-4 h-4" />
               </button>
 
               <Link
                 href={`/admin/masters/${m.id}/edit`}
-                className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
+                className="w-9 h-9 rounded-xl border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
               >
                 <Pencil className="w-4 h-4" />
               </Link>
@@ -136,8 +136,8 @@ export default function MastersTable({ masters }: { masters: Master[] }) {
                 title={m.is_active ? 'Деактивировать' : 'Активировать'}
                 className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
                   m.is_active
-                    ? 'border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50'
-                    : 'border-emerald-200 text-emerald-500 hover:bg-emerald-50'
+                    ? 'border-border text-muted-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/10'
+                    : 'border-success/30 text-success hover:bg-success/10'
                 }`}
               >
                 <Power className="w-4 h-4" />
@@ -156,17 +156,17 @@ export default function MastersTable({ masters }: { masters: Master[] }) {
               после входа мастер получит доступ к своему личному кабинету записей.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-center gap-2 bg-slate-50 rounded-2xl p-3 mt-2">
+          <div className="flex items-center gap-2 bg-muted rounded-2xl p-3 mt-2">
             <input
               readOnly
               value={inviteLink ?? ''}
-              className="flex-1 bg-transparent text-sm text-slate-600 outline-none truncate"
+              className="flex-1 bg-transparent text-sm text-card-foreground/80 outline-none truncate"
             />
             <button
               onClick={copyLink}
-              className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-[#c9a08a] transition-all shrink-0"
+              className="w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary transition-all shrink-0"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
             </button>
           </div>
         </DialogContent>

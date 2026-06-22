@@ -25,10 +25,10 @@ export default function ScheduleGrid({
       {ordered.map((d) => (
         <div
           key={d.day_of_week}
-          className="flex items-center gap-4 px-4 py-3 rounded-2xl border border-slate-100 bg-white"
+          className="flex items-center gap-4 px-4 py-3 rounded-2xl border border-border bg-background"
         >
           <div className="w-32 shrink-0">
-            <p className="text-sm font-medium text-slate-900">{DAY_NAMES_FULL[d.day_of_week]}</p>
+            <p className="text-sm font-medium text-foreground">{DAY_NAMES_FULL[d.day_of_week]}</p>
           </div>
 
           <label className="flex items-center gap-2 shrink-0 cursor-pointer">
@@ -43,9 +43,9 @@ export default function ScheduleGrid({
                   time_to: isDayOff ? null : d.time_to ?? '20:00',
                 });
               }}
-              className="w-4 h-4 rounded accent-[#c9a08a]"
+              className="w-4 h-4 rounded accent-primary"
             />
-            <span className="text-sm text-slate-500">Выходной</span>
+            <span className="text-sm text-muted-foreground">Выходной</span>
           </label>
 
           {!d.is_day_off && (
@@ -54,20 +54,20 @@ export default function ScheduleGrid({
                 type="time"
                 value={d.time_from ?? '10:00'}
                 onChange={(e) => update(d.day_of_week, { time_from: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+                className="h-10 px-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
               />
-              <span className="text-slate-400 text-sm">—</span>
+              <span className="text-muted-foreground text-sm">—</span>
               <input
                 type="time"
                 value={d.time_to ?? '20:00'}
                 onChange={(e) => update(d.day_of_week, { time_to: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#c9a08a]"
+                className="h-10 px-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
               />
             </div>
           )}
 
           {d.is_day_off && (
-            <p className="text-sm text-slate-400 flex-1">Мастер не работает в этот день</p>
+            <p className="text-sm text-muted-foreground flex-1">Мастер не работает в этот день</p>
           )}
         </div>
       ))}
