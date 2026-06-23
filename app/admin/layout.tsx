@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, Users, Scissors, Calendar,
-  BarChart2, History, PackageOpen, LogOut, CalendarOff, Settings
+  BarChart2, History, PackageOpen, LogOut, CalendarOff, Settings, Store
 } from 'lucide-react';
 import SignOutLink from '@/components/shared/SignOutLink';
 
@@ -12,6 +12,7 @@ const nav = [
   { href: '/admin/bookings', label: 'Записи', icon: Calendar },
   { href: '/admin/masters', label: 'Мастера', icon: Users },
   { href: '/admin/services', label: 'Услуги', icon: Scissors },
+  { href: '/admin/storefront', label: 'Витрина', icon: Store },
   { href: '/admin/stats', label: 'Статистика', icon: BarChart2 },
   { href: '/admin/history', label: 'История', icon: History },
   { href: '/admin/blocks', label: 'Расписание', icon: CalendarOff },

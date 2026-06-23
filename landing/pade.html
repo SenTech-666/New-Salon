@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Booky — запись клиентов для салонов и мастеров</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:    #1C1B1A;
+    --ink2:   #2A2826;
+    --copper: #C76E3D;
+    --copper-light: #D98455;
+    --cream:  #F7F3EC;
+    --warm-gray: #8B8378;
+    --sand:   #E8E1D3;
+    --sand2:  #D4CBB8;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--ink);
+    color: var(--cream);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 48px;
+    background: rgba(28,27,26,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .nav-logo {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    color: var(--cream);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--copper); }
+  .nav-links { display: flex; align-items: center; gap: 32px; }
+  .nav-links a {
+    font-size: 14px; color: var(--warm-gray); text-decoration: none;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--cream); }
+  .nav-cta {
+    font-size: 14px; font-weight: 500;
+    background: var(--copper); color: white;
+    padding: 10px 22px; border-radius: 8px;
+    text-decoration: none; transition: background .2s;
+  }
+  .nav-cta:hover { background: var(--copper-light); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 120px 48px 80px;
+    gap: 64px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .hero-text { max-width: 560px; }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--copper);
+    background: rgba(199,110,61,0.12);
+    padding: 6px 14px; border-radius: 100px;
+    margin-bottom: 28px;
+  }
+  .hero-eyebrow::before {
+    content: ''; width: 6px; height: 6px;
+    background: var(--copper); border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  .hero-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+    color: var(--cream);
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--copper);
+  }
+  .hero-sub {
+    font-size: 17px;
+    color: var(--warm-gray);
+    line-height: 1.65;
+    margin-bottom: 40px;
+    max-width: 440px;
+  }
+  .hero-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .btn-primary {
+    font-size: 15px; font-weight: 500;
+    background: var(--copper); color: white;
+    padding: 14px 28px; border-radius: 10px;
+    border: none; cursor: pointer; text-decoration: none;
+    transition: background .2s, transform .15s;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: var(--copper-light); transform: translateY(-1px); }
+  .btn-ghost {
+    font-size: 15px; color: var(--warm-gray); background: none;
+    border: 1px solid rgba(255,255,255,0.1); padding: 14px 24px;
+    border-radius: 10px; cursor: pointer; text-decoration: none;
+    transition: border-color .2s, color .2s;
+    display: inline-block;
+  }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--cream); }
+
+  /* INTERACTIVE WIDGET */
+  .hero-widget {
+    background: var(--ink2);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+  }
+  .widget-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .widget-title {
+    font-family: 'Fraunces', serif;
+    font-size: 15px; font-weight: 400;
+    color: var(--cream);
+  }
+  .widget-badge {
+    font-size: 11px; font-weight: 500;
+    background: rgba(199,110,61,0.15);
+    color: var(--copper);
+    padding: 3px 10px; border-radius: 100px;
+  }
+  .calendar-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .cal-month {
+    font-size: 13px; font-weight: 500; color: var(--cream);
+    letter-spacing: 0.02em;
+  }
+  .cal-arrow {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: rgba(255,255,255,0.06); border: none; cursor: pointer;
+    color: var(--warm-gray); display: flex; align-items: center;
+    justify-content: center; font-size: 14px; transition: background .15s;
+  }
+  .cal-arrow:hover { background: rgba(255,255,255,0.12); color: var(--cream); }
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 3px; margin-bottom: 16px;
+  }
+  .cal-day-header {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--warm-gray);
+    text-align: center; padding: 4px 0;
+  }
+  .cal-day {
+    aspect-ratio: 1; border-radius: 7px; border: none; cursor: pointer;
+    font-size: 12px; font-weight: 500; color: var(--warm-gray);
+    background: transparent; transition: background .15s, color .15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-day:hover:not(.empty):not(.past) { background: rgba(255,255,255,0.08); color: var(--cream); }
+  .cal-day.today { color: var(--copper); font-weight: 600; }
+  .cal-day.selected { background: var(--copper) !important; color: white !important; }
+  .cal-day.has-slots { position: relative; }
+  .cal-day.has-slots::after {
+    content: ''; position: absolute; bottom: 4px;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--copper); opacity: 0.6;
+  }
+  .cal-day.empty { cursor: default; }
+  .cal-day.past { opacity: 0.25; cursor: default; }
+
+  .time-slots-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--warm-gray);
+    margin-bottom: 10px;
+  }
+  .time-slots {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+  }
+  .slot {
+    padding: 8px 4px; border-radius: 7px; border: none; cursor: pointer;
+    font-size: 12px; font-weight: 500; text-align: center;
+    background: rgba(255,255,255,0.05);
+    color: var(--cream); transition: background .15s, transform .1s;
+  }
+  .slot:hover { background: rgba(199,110,61,0.2); color: var(--copper); transform: scale(1.03); }
+  .slot.selected-slot { background: var(--copper); color: white; }
+  .slot.taken { background: rgba(255,255,255,0.02); color: var(--warm-gray); cursor: not-allowed; text-decoration: line-through; opacity: 0.5; }
+
+  .master-row {
+    display: flex; gap: 8px; margin-top: 16px;
+    padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .master-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 100px; padding: 5px 12px 5px 6px;
+    cursor: pointer; transition: border-color .15s;
+  }
+  .master-chip:hover { border-color: rgba(199,110,61,0.4); }
+  .master-chip.active { border-color: var(--copper); background: rgba(199,110,61,0.1); }
+  .master-avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 600; color: white;
+  }
+  .master-name { font-size: 12px; color: var(--cream); }
+
+  .book-btn {
+    margin-top: 14px; width: 100%; padding: 13px;
+    background: var(--copper); border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 500; color: white; cursor: pointer;
+    transition: background .2s, transform .15s;
+    display: none;
+  }
+  .book-btn.visible { display: block; }
+  .book-btn:hover { background: var(--copper-light); transform: translateY(-1px); }
+
+  /* WHO IT'S FOR */
+  .for-whom {
+    background: var(--cream);
+    color: var(--ink);
+    padding: 100px 48px;
+  }
+  .section-inner { max-width: 1280px; margin: 0 auto; }
+  .section-eyebrow {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--copper);
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 300; line-height: 1.15;
+    letter-spacing: -0.02em; color: var(--ink);
+    margin-bottom: 56px; max-width: 600px;
+  }
+  .audience-tabs {
+    display: flex; gap: 4px;
+    background: var(--sand);
+    border-radius: 12px; padding: 5px;
+    width: fit-content; margin-bottom: 40px;
+  }
+  .aud-tab {
+    font-size: 14px; font-weight: 500;
+    padding: 10px 22px; border-radius: 9px;
+    border: none; cursor: pointer; background: transparent;
+    color: var(--warm-gray); transition: all .2s;
+  }
+  .aud-tab.active {
+    background: white; color: var(--ink);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .aud-content { display: none; }
+  .aud-content.active { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+  .aud-headline {
+    font-family: 'Fraunces', serif;
+    font-size: 28px; font-weight: 400; font-style: italic;
+    line-height: 1.3; color: var(--ink); margin-bottom: 20px;
+  }
+  .aud-desc { font-size: 16px; color: #555; line-height: 1.7; margin-bottom: 28px; }
+  .aud-perks { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .aud-perks li {
+    display: flex; align-items: flex-start; gap: 12px;
+    font-size: 15px; color: var(--ink);
+  }
+  .aud-perks li::before {
+    content: ''; width: 18px; height: 18px;
+    background: rgba(199,110,61,0.12);
+    border-radius: 50%; flex-shrink: 0; margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3 7l2.5 2.5 5.5-5' stroke='%23C76E3D' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: center; background-size: 12px;
+  }
+  .aud-visual {
+    background: var(--sand); border-radius: 16px; padding: 28px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .stat-card {
+    background: white; border-radius: 12px; padding: 18px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 28px; font-weight: 400; color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+  .stat-label { font-size: 12px; color: #888; margin-top: 2px; }
+  .stat-trend {
+    font-size: 12px; font-weight: 500;
+    background: #F0FBF0; color: #3A8C3A;
+    padding: 4px 10px; border-radius: 100px;
+  }
+
+  /* HOW IT WORKS */
+  .how {
+    background: var(--ink);
+    padding: 100px 48px;
+  }
+  .how-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 2px; margin-top: 60px;
+  }
+  .how-step {
+    background: var(--ink2);
+    padding: 36px 32px;
+    position: relative;
+    transition: background .2s;
+  }
+  .how-step:first-child { border-radius: 16px 0 0 16px; }
+  .how-step:last-child { border-radius: 0 16px 16px 0; }
+  .how-step:hover { background: #302E2C; }
+  .step-num {
+    font-family: 'Fraunces', serif;
+    font-size: 48px; font-weight: 300;
+    color: rgba(199,110,61,0.25);
+    line-height: 1; margin-bottom: 20px;
+  }
+  .step-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px; font-weight: 400;
+    color: var(--cream); margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  .step-desc { font-size: 14px; color: var(--warm-gray); line-height: 1.7; }
+
+  /* FEATURES */
+  .features {
+    background: var(--cream); color: var(--ink);
+    padding: 100px 48px;
+  }
+  .features-bento {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px; margin-top: 60px;
+  }
+  .feat {
+    background: var(--sand); border-radius: 16px; padding: 32px;
+  }
+  .feat-big { grid-row: span 2; }
+  .feat-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(199,110,61,0.1);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px; font-size: 18px;
+  }
+  .feat-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px; font-weight: 400; color: var(--ink);
+    margin-bottom: 10px; line-height: 1.3;
+  }
+  .feat-desc { font-size: 14px; color: #666; line-height: 1.65; }
+  .feat-big .feat-title { font-size: 26px; margin-bottom: 14px; }
+  .feat-big .feat-desc { font-size: 15px; }
+  .feat-visual {
+    margin-top: 24px; background: white; border-radius: 10px; padding: 16px;
+  }
+  .mini-chart { display: flex; align-items: flex-end; gap: 6px; height: 64px; }
+  .bar {
+    flex: 1; background: rgba(199,110,61,0.15); border-radius: 4px 4px 0 0;
+    transition: height .3s;
+  }
+  .bar.lit { background: var(--copper); }
+
+  /* CTA */
+  .cta-section {
+    background: var(--ink);
+    padding: 100px 48px;
+    text-align: center;
+  }
+  .cta-inner { max-width: 560px; margin: 0 auto; }
+  .cta-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(36px, 5vw, 58px);
+    font-weight: 300; line-height: 1.15;
+    letter-spacing: -0.03em; margin-bottom: 16px;
+  }
+  .cta-title em { font-style: italic; color: var(--copper); }
+  .cta-sub {
+    font-size: 16px; color: var(--warm-gray); margin-bottom: 40px; line-height: 1.65;
+  }
+  .email-form {
+    display: flex; gap: 10px; max-width: 420px; margin: 0 auto 20px;
+  }
+  .email-input {
+    flex: 1; height: 50px; background: var(--ink2);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+    padding: 0 18px; font-size: 15px; color: var(--cream);
+    outline: none; font-family: 'Inter', sans-serif;
+    transition: border-color .2s;
+  }
+  .email-input::placeholder { color: var(--warm-gray); }
+  .email-input:focus { border-color: rgba(199,110,61,0.5); }
+  .submit-btn {
+    height: 50px; padding: 0 24px;
+    background: var(--copper); border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 500; color: white; cursor: pointer;
+    font-family: 'Inter', sans-serif; white-space: nowrap;
+    transition: background .2s, transform .15s;
+  }
+  .submit-btn:hover { background: var(--copper-light); transform: translateY(-1px); }
+  .cta-note { font-size: 13px; color: var(--warm-gray); }
+  .success-msg {
+    display: none; font-size: 16px; color: #6DCE7E;
+    font-family: 'Fraunces', serif; font-style: italic;
+    padding: 12px; margin: 0 auto; max-width: 420px;
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--ink2); padding: 40px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .footer-logo {
+    font-family: 'Fraunces', serif; font-size: 18px; font-weight: 300;
+    color: var(--cream); text-decoration: none;
+  }
+  .footer-logo span { color: var(--copper); }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a { font-size: 13px; color: var(--warm-gray); text-decoration: none; }
+  .footer-links a:hover { color: var(--cream); }
+  .footer-copy { font-size: 13px; color: var(--warm-gray); }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    .hero {
+      grid-template-columns: 1fr; padding: 100px 24px 60px;
+      gap: 40px;
+    }
+    .for-whom, .how, .features, .cta-section { padding: 72px 24px; }
+    .aud-content.active { grid-template-columns: 1fr; }
+    .how-grid { grid-template-columns: 1fr; gap: 8px; }
+    .how-step:first-child { border-radius: 16px 16px 0 0; }
+    .how-step:last-child { border-radius: 0 0 16px 16px; }
+    .features-bento { grid-template-columns: 1fr; grid-template-rows: auto; }
+    .feat-big { grid-row: span 1; }
+    .email-form { flex-direction: column; }
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">book<span>·</span>ly</a>
+  <div class="nav-links">
+    <a href="#how">Как это работает</a>
+    <a href="#features">Возможности</a>
+    <a href="#access">Ранний доступ</a>
+  </div>
+  <a href="#access" class="nav-cta">Получить доступ</a>
+</nav>
+
+<!-- HERO -->
+<section style="background: var(--ink);">
+  <div class="hero">
+    <div class="hero-text">
+      <div class="hero-eyebrow">Ранний доступ открыт</div>
+      <h1 class="hero-title">
+        Запись клиентов,<br>
+        которая <em>работает</em><br>
+        пока вы работаете
+      </h1>
+      <p class="hero-sub">
+        Онлайн-запись, расписание мастеров и управление салоном — 
+        в одном месте. Для салонов, барбершопов и мастеров-фрилансеров.
+      </p>
+      <div class="hero-actions">
+        <a href="#access" class="btn-primary">Записаться в лист ожидания</a>
+        <a href="#how" class="btn-ghost">Как это работает →</a>
+      </div>
+    </div>
+
+    <div class="hero-widget">
+      <div class="widget-header">
+        <span class="widget-title">Запись к мастеру</span>
+        <span class="widget-badge">Живой виджет</span>
+      </div>
+
+      <div class="master-row" id="masterRow" style="padding-top:0; margin-top:0; border-top:none; margin-bottom:16px;">
+        <div class="master-chip active" onclick="selectMaster(this, 'Анна')">
+          <div class="master-avatar" style="background:#C76E3D;">А</div>
+          <span class="master-name">Анна</span>
+        </div>
+        <div class="master-chip" onclick="selectMaster(this, 'Серёжа')">
+          <div class="master-avatar" style="background:#6B8FA8;">С</div>
+          <span class="master-name">Серёжа</span>
+        </div>
+        <div class="master-chip" onclick="selectMaster(this, 'Катя')">
+          <div class="master-avatar" style="background:#8B7355;">К</div>
+          <span class="master-name">Катя</span>
+        </div>
+      </div>
+
+      <div class="calendar-nav">
+        <button class="cal-arrow" id="prevBtn" onclick="changeMonth(-1)">←</button>
+        <span class="cal-month" id="calMonth"></span>
+        <button class="cal-arrow" onclick="changeMonth(1)">→</button>
+      </div>
+      <div class="cal-grid" id="calGrid">
+        <div class="cal-day-header">Пн</div>
+        <div class="cal-day-header">Вт</div>
+        <div class="cal-day-header">Ср</div>
+        <div class="cal-day-header">Чт</div>
+        <div class="cal-day-header">Пт</div>
+        <div class="cal-day-header">Сб</div>
+        <div class="cal-day-header">Вс</div>
+      </div>
+
+      <div class="time-slots-label" id="slotsLabel" style="display:none;">Свободное время</div>
+      <div class="time-slots" id="timeSlots"></div>
+      <button class="book-btn" id="bookBtn" onclick="confirmBook()">Подтвердить запись</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOR WHOM -->
+<section class="for-whom" id="for-whom">
+  <div class="section-inner">
+    <div class="section-eyebrow">Для кого</div>
+    <h2 class="section-title">Одна платформа — три формата бизнеса</h2>
+
+    <div class="audience-tabs">
+      <button class="aud-tab active" onclick="switchAud('salon', this)">Салон</button>
+      <button class="aud-tab" onclick="switchAud('barber', this)">Барбершоп</button>
+      <button class="aud-tab" onclick="switchAud('free', this)">Мастер-фрилансер</button>
+    </div>
+
+    <div class="aud-content active" id="aud-salon">
+      <div>
+        <div class="aud-headline">Всё, что нужно директору,<br>в одной вкладке</div>
+        <p class="aud-desc">Несколько мастеров, разные услуги, общая запись — администратор видит картину целиком и не тонет в мессенджерах.</p>
+        <ul class="aud-perks">
+          <li>Единая запись для всех мастеров с защитой персональных данных</li>
+          <li>Разграничение ролей: владелец, менеджер, мастер</li>
+          <li>Склад расходников — списание автоматически при закрытии записи</li>
+          <li>Приглашение менеджеров по ссылке, без регистрации лишних аккаунтов</li>
+        </ul>
+      </div>
+      <div class="aud-visual">
+        <div class="stat-card">
+          <div><div class="stat-num">94%</div><div class="stat-label">клиентов приходят в назначенное время</div></div>
+          <span class="stat-trend">↑ 12%</span>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-num">3 мин</div><div class="stat-label">среднее время записи клиентом</div></div>
+          <span class="stat-trend">–40 мин</span>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-num">0 ₽</div><div class="stat-label">стоимость в период раннего доступа</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aud-content" id="aud-barber">
+      <div>
+        <div class="aud-headline">Расписание под контролем — кресло не простаивает</div>
+        <p class="aud-desc">Настройте часы каждого барбера отдельно. Клиент сам выбирает мастера и время — администратор занят делом, не телефоном.</p>
+        <ul class="aud-perks">
+          <li>Индивидуальные расписания + шаблоны на всю команду сразу</li>
+          <li>Клиент видит только свободные слоты нужного мастера</li>
+          <li>Кабинет мастера: видит только свои записи, без чужих данных</li>
+          <li>Напоминания клиентам автоматически</li>
+        </ul>
+      </div>
+      <div class="aud-visual">
+        <div class="stat-card">
+          <div><div class="stat-num">5</div><div class="stat-label">минут — настройка нового мастера</div></div>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-num">–80%</div><div class="stat-label">звонков с вопросом "а когда свободно?"</div></div>
+          <span class="stat-trend">↑ продуктивно</span>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-num">24/7</div><div class="stat-label">запись принимается даже когда вы спите</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aud-content" id="aud-free">
+      <div>
+        <div class="aud-headline">Работаешь один — клиенты всё равно записываются сами</div>
+        <p class="aud-desc">Личная страница мастера с виджетом записи. Отправляете ссылку — клиент выбирает время, подтверждение приходит само.</p>
+        <ul class="aud-perks">
+          <li>Готовая страница с вашими услугами и расписанием</li>
+          <li>Ссылка на запись — в шапку инстаграма или телеграм-бот</li>
+          <li>Кабинет с историей всех клиентов и суммами</li>
+          <li>При росте — плавный переход в формат салона без переноса данных</li>
+        </ul>
+      </div>
+      <div class="aud-visual">
+        <div class="stat-card">
+          <div><div class="stat-num">1 ссылка</div><div class="stat-label">и клиент сам выбирает время</div></div>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-num">Без кода</div><div class="stat-label">настройка за 10 минут с нуля</div></div>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-num">∞</div><div class="stat-label">история клиентов всегда под рукой</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-inner">
+    <div class="section-eyebrow" style="color: var(--copper);">Как это работает</div>
+    <h2 class="section-title" style="color: var(--cream);">От регистрации до первой записи — меньше часа</h2>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="step-num">01</div>
+        <div class="step-title">Создайте профиль салона</div>
+        <p class="step-desc">Название, адрес, услуги и цены. Добавьте мастеров — каждый получит своё расписание и личный кабинет.</p>
+      </div>
+      <div class="how-step">
+        <div class="step-num">02</div>
+        <div class="step-title">Поделитесь ссылкой на запись</div>
+        <p class="step-desc">Уникальный адрес вашей страницы — в шапку профиля, в мессенджер, на сайт. Клиент открывает и выбирает удобное время.</p>
+      </div>
+      <div class="how-step">
+        <div class="step-num">03</div>
+        <div class="step-title">Принимайте и управляйте</div>
+        <p class="step-desc">Новые записи — сразу в вашем кабинете. Статусы, история, склад, финансы — всё в одном месте без Excel и блокнотов.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-inner">
+    <div class="section-eyebrow">Возможности</div>
+    <h2 class="section-title">Всё, что нужно — и ничего лишнего</h2>
+    <div class="features-bento">
+      <div class="feat feat-big">
+        <div class="feat-icon">📅</div>
+        <div class="feat-title">Умное расписание для каждого мастера</div>
+        <p class="feat-desc">Задайте шаблон рабочих часов один раз — и примените на всю команду. Каждый мастер настраивает свои исключения: отгулы, укороченные дни. Клиент всегда видит только реально свободные слоты.</p>
+        <div class="feat-visual">
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+            <div style="width:24px;height:24px;border-radius:50%;background:#C76E3D;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:white;">А</div>
+            <div style="flex:1;">
+              <div style="display:flex;gap:4px;">
+                <div style="height:20px;border-radius:4px;background:rgba(199,110,61,0.2);width:40px;"></div>
+                <div style="height:20px;border-radius:4px;background:rgba(199,110,61,0.7);width:60px;"></div>
+                <div style="height:20px;border-radius:4px;background:rgba(199,110,61,0.2);width:30px;"></div>
+                <div style="height:20px;border-radius:4px;background:rgba(199,110,61,0.9);width:50px;"></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <div style="width:24px;height:24px;border-radius:50%;background:#6B8FA8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:white;">С</div>
+            <div style="flex:1;">
+              <div style="display:flex;gap:4px;">
+                <div style="height:20px;border-radius:4px;background:rgba(107,143,168,0.7);width:70px;"></div>
+                <div style="height:20px;border-radius:4px;background:rgba(107,143,168,0.2);width:35px;"></div>
+                <div style="height:20px;border-radius:4px;background:rgba(107,143,168,0.6);width:55px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🔐</div>
+        <div class="feat-title">Роли и доступы</div>
+        <p class="feat-desc">Владелец, менеджер, мастер — у каждого своё. Мастер видит только свои записи.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📦</div>
+        <div class="feat-title">Учёт расходников</div>
+        <p class="feat-desc">Склад пересчитывается автоматически при закрытии каждой записи.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🔗</div>
+        <div class="feat-title">Приглашения по ссылке</div>
+        <p class="feat-desc">Позвать мастера или менеджера — ссылка на 7 дней, одно нажатие.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📱</div>
+        <div class="feat-title">Работает на телефоне</div>
+        <p class="feat-desc">Клиент записывается с мобильного — удобно и быстро.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="access">
+  <div class="cta-inner">
+    <h2 class="cta-title">Хватит вести запись<br>в <em>мессенджерах</em></h2>
+    <p class="cta-sub">Оставьте почту — мы дадим ранний доступ бесплатно и поможем настроить под ваш салон за один звонок.</p>
+    <div class="email-form" id="emailForm">
+      <input type="email" class="email-input" id="emailInput" placeholder="ваш@email.ru" />
+      <button class="submit-btn" onclick="submitEmail()">Хочу доступ</button>
+    </div>
+    <div class="success-msg" id="successMsg">
+      Отлично, мы вам напишем ✦
+    </div>
+    <p class="cta-note">Без спама. Без обязательств. Просто покажем продукт живьём.</p>
+  </div>
+</section>
+
+<footer>
+  <a href="#" class="footer-logo">book<span>·</span>ly</a>
+  <div class="footer-links">
+    <a href="#">Политика конфиденциальности</a>
+    <a href="#">Условия использования</a>
+    <a href="mailto:hello@bookly.ru">Написать нам</a>
+  </div>
+  <span class="footer-copy">© 2025 Bookly</span>
+</footer>
+
+<script>
+// ===== CALENDAR WIDGET =====
+const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const today = new Date();
+let currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
+let selectedDay = null;
+let selectedSlot = null;
+let selectedMaster = 'Анна';
+
+const SLOTS_BY_MASTER = {
+  'Анна':   ['10:00','10:30','12:00','14:30','16:00','17:00'],
+  'Серёжа': ['09:00','09:30','11:00','13:00','15:30','18:00'],
+  'Катя':   ['10:00','11:30','13:30','15:00','16:30','17:30'],
+};
+const TAKEN_BY_MASTER = {
+  'Анна':   ['10:30','14:30'],
+  'Серёжа': ['09:30','13:00'],
+  'Катя':   ['11:30','16:30'],
+};
+
+function renderCalendar() {
+  const grid = document.getElementById('calGrid');
+  const headers = Array.from(grid.querySelectorAll('.cal-day-header'));
+  Array.from(grid.children).forEach(c => { if (!c.classList.contains('cal-day-header')) c.remove(); });
+
+  document.getElementById('calMonth').textContent = MONTHS[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
+
+  const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+  const offset = firstDay === 0 ? 6 : firstDay - 1;
+  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+
+  // slot days pattern per master
+  const slotDays = [3,5,8,10,12,15,17,19,22,24,26,29];
+
+  for (let i = 0; i < offset; i++) {
+    const d = document.createElement('div');
+    d.className = 'cal-day empty';
+    grid.appendChild(d);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    el.textContent = d;
+
+    const isPast = new Date(currentDate.getFullYear(), currentDate.getMonth(), d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (isPast) { el.classList.add('past'); }
+    else {
+      const isToday = d === today.getDate() && currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear();
+      if (isToday) el.classList.add('today');
+      if (slotDays.includes(d)) el.classList.add('has-slots');
+      if (selectedDay === d) el.classList.add('selected');
+      el.onclick = () => selectDay(d);
+    }
+    grid.appendChild(el);
+  }
+
+  document.getElementById('prevBtn').disabled = currentDate <= new Date(today.getFullYear(), today.getMonth(), 1);
+}
+
+function selectDay(d) {
+  selectedDay = d;
+  selectedSlot = null;
+  renderCalendar();
+  renderSlots();
+}
+
+function renderSlots() {
+  const container = document.getElementById('timeSlots');
+  const label = document.getElementById('slotsLabel');
+  const btn = document.getElementById('bookBtn');
+
+  if (!selectedDay) { container.innerHTML = ''; label.style.display = 'none'; btn.classList.remove('visible'); return; }
+
+  label.style.display = 'block';
+  const slots = SLOTS_BY_MASTER[selectedMaster] || [];
+  const taken = TAKEN_BY_MASTER[selectedMaster] || [];
+
+  container.innerHTML = '';
+  slots.forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'slot';
+    el.textContent = s;
+    if (taken.includes(s)) { el.classList.add('taken'); }
+    else {
+      if (selectedSlot === s) el.classList.add('selected-slot');
+      el.onclick = () => { selectedSlot = s; renderSlots(); btn.classList.add('visible'); };
+    }
+    container.appendChild(el);
+  });
+}
+
+function changeMonth(dir) {
+  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + dir, 1);
+  selectedDay = null; selectedSlot = null;
+  renderCalendar(); renderSlots();
+}
+
+function selectMaster(el, name) {
+  document.querySelectorAll('.master-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  selectedMaster = name;
+  selectedSlot = null;
+  renderSlots();
+}
+
+function confirmBook() {
+  if (!selectedDay || !selectedSlot) return;
+  const btn = document.getElementById('bookBtn');
+  btn.textContent = `✓ Записано на ${selectedSlot}, ${selectedDay} ${MONTHS[currentDate.getMonth()].slice(0,3).toLowerCase()}`;
+  btn.style.background = '#3A8C3A';
+  btn.onclick = null;
+  setTimeout(() => {
+    btn.textContent = 'Подтвердить запись';
+    btn.style.background = '';
+    btn.onclick = confirmBook;
+    selectedDay = null; selectedSlot = null;
+    renderCalendar(); renderSlots();
+    btn.classList.remove('visible');
+  }, 3000);
+}
+
+renderCalendar();
+
+// ===== AUDIENCE TABS =====
+function switchAud(id, btn) {
+  document.querySelectorAll('.aud-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.aud-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('aud-' + id).classList.add('active');
+}
+
+// ===== EMAIL FORM =====
+function submitEmail() {
+  const val = document.getElementById('emailInput').value.trim();
+  if (!val || !val.includes('@')) {
+    document.getElementById('emailInput').style.borderColor = 'rgba(199,110,61,0.8)';
+    return;
+  }
+  document.getElementById('emailForm').style.display = 'none';
+  document.getElementById('successMsg').style.display = 'block';
+}
+document.getElementById('emailInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitEmail(); });
+</script>
+</body>
+</html>

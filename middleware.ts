@@ -6,6 +6,7 @@ const isProtectedRoute = createRouteMatcher([
   '/admin(.*)',
   '/master(.*)',
   '/owner(.*)',
+  '/onboarding(.*)', // создание salon — требует Clerk-сессии для auth.jwt() в RPC
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

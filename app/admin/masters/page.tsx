@@ -5,10 +5,24 @@ import MastersTable from '@/components/admin/MastersTable';
 
 export default async function AdminMastersPage() {
   const supabase = await createClient();
-  const { data: masters } = await supabase
+
+  // RLS на masters теперь фильтрует по current_salon_id() сам — этот
+  // .order('name') без явного .eq('salon_id', ...) безопасен ПОСЛЕ
+  // применения fix_masters_rls.sql. До фикса политика на masters была
+  // либо отсутствующей, либо слишком широкой ('true'), из-за чего
+  // отдавались мастера всех салонов сразу.
+  //
+  // Явного .eq('salon_id', ...) здесь намеренно не добавляем: salon_id
+  // текущего пользователя не известен на фронте без отдельного запроса,
+  // а current_salon_id() в RLS уже делает это надёжно на стороне базы.
+  const { data: masters, error } = await supabase
     .from('masters')
     .select('*, services(count)')
     .order('name');
+
+  if (error) {
+    console.error('Ошибка загрузки мастеров:', error);
+  }
 
   return (
     <div className="p-8">
