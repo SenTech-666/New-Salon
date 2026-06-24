@@ -95,7 +95,7 @@ export default function StorefrontPage({
   const today = todayIndex();
 
   return (
-    <div className="bp-bg min-h-screen">
+    <div className="min-h-screen" style={{ background: 'var(--landing-bg)' }}>
 
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
@@ -111,7 +111,7 @@ export default function StorefrontPage({
         ) : (
           <div
             className="absolute inset-0"
-            style={{ background: 'linear-gradient(135deg, var(--bp-bg-1), var(--bp-bg-2))' }}
+            style={{ background: 'linear-gradient(135deg, var(--landing-bg), var(--landing-bg-alt))' }}
           />
         )}
 
@@ -127,10 +127,10 @@ export default function StorefrontPage({
           )}
 
           <h1
-            className="mb-3 text-4xl font-bold leading-tight tracking-tight sm:text-6xl"
+            className="mb-3 text-4xl font-bold italic leading-tight tracking-tight sm:text-6xl"
             style={{
-              fontFamily: 'var(--bp-font-display)',
-              color: salon.cover_url ? '#fff' : 'var(--bp-text)',
+              fontFamily: 'var(--landing-font-display)',
+              color: salon.cover_url ? '#fff' : 'var(--landing-text)',
             }}
           >
             {salon.name}
@@ -139,7 +139,7 @@ export default function StorefrontPage({
           {salon.description && (
             <p
               className="mb-8 max-w-lg text-base leading-relaxed sm:text-lg"
-              style={{ color: salon.cover_url ? 'rgba(255,255,255,0.80)' : 'var(--bp-text-dim)' }}
+              style={{ color: salon.cover_url ? 'rgba(255,255,255,0.80)' : 'var(--landing-text-dim)' }}
             >
               {salon.description}
             </p>
@@ -148,7 +148,13 @@ export default function StorefrontPage({
           <Link href={bookingHref}>
             <Button
               size="lg"
-              className="bp-submit-btn rounded-full px-8 py-3 text-base font-semibold shadow-lg"
+              className="rounded-full px-8 py-3 text-base font-semibold shadow-lg transition-all hover:opacity-90"
+              style={{
+                background: `linear-gradient(to right, var(--landing-accent), var(--landing-accent-dark))`,
+                color: 'var(--landing-on-accent)',
+                boxShadow: '0 10px 30px var(--landing-accent-30)',
+                border: 'none',
+              }}
             >
               <CalendarCheck className="mr-2 h-5 w-5" />
               Записаться онлайн
@@ -163,7 +169,7 @@ export default function StorefrontPage({
           <div className="mx-auto max-w-5xl">
             <h2
               className="mb-8 text-2xl font-bold sm:text-3xl"
-              style={{ fontFamily: 'var(--bp-font-display)', color: 'var(--bp-text)' }}
+              style={{ fontFamily: 'var(--landing-font-display)', color: 'var(--landing-text)' }}
             >
               Наши работы
             </h2>
@@ -188,32 +194,34 @@ export default function StorefrontPage({
 
       {/* ── УСЛУГИ ───────────────────────────────────────────── */}
       {services.length > 0 && (
-        <section className="px-6 py-16 sm:px-10">
+        <section className="px-6 py-16 sm:px-10" style={{ background: 'var(--landing-bg-alt)' }}>
           <div className="mx-auto max-w-5xl">
             <h2
               className="mb-8 text-2xl font-bold sm:text-3xl"
-              style={{ fontFamily: 'var(--bp-font-display)', color: 'var(--bp-text)' }}
+              style={{ fontFamily: 'var(--landing-font-display)', color: 'var(--landing-text)' }}
             >
               Услуги
             </h2>
-            <div className="flex flex-col divide-y"
-              style={{ borderRadius: '1rem', overflow: 'hidden', border: '1px solid var(--bp-glass-border)' }}>
+            <div
+              className="flex flex-col divide-y"
+              style={{ borderRadius: '1rem', overflow: 'hidden', border: '1px solid var(--landing-accent-15)' }}
+            >
               {services.map((service, idx) => (
                 <div
                   key={service.id}
                   className="flex items-center justify-between px-6 py-4 transition"
-                  style={{ background: idx % 2 === 0 ? 'var(--bp-glass-bg)' : 'transparent' }}
+                  style={{ background: idx % 2 === 0 ? 'var(--landing-surface)' : 'transparent' }}
                 >
                   <div>
-                    <div className="font-medium" style={{ color: 'var(--bp-text)' }}>
+                    <div className="font-medium" style={{ color: 'var(--landing-text)' }}>
                       {service.name}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-1 text-sm" style={{ color: 'var(--bp-text-dim)' }}>
+                    <div className="mt-0.5 flex items-center gap-1 text-sm" style={{ color: 'var(--landing-text-dim)' }}>
                       <Clock className="h-3.5 w-3.5" />
                       {formatDuration(service.duration)}
                     </div>
                   </div>
-                  <div className="text-lg font-bold" style={{ color: 'var(--bp-accent)' }}>
+                  <div className="text-lg font-bold" style={{ color: 'var(--landing-accent)' }}>
                     {formatPrice(service.price)}
                   </div>
                 </div>
@@ -221,7 +229,11 @@ export default function StorefrontPage({
             </div>
 
             <Link href={bookingHref}>
-              <Button variant="outline" className="mt-6 rounded-full px-6">
+              <Button
+                variant="outline"
+                className="mt-6 rounded-full px-6"
+                style={{ borderColor: 'var(--landing-accent-40)', color: 'var(--landing-text)' }}
+              >
                 Выбрать услугу и записаться
               </Button>
             </Link>
@@ -234,21 +246,26 @@ export default function StorefrontPage({
         <div className="mx-auto max-w-5xl">
           <div
             className="grid gap-0 overflow-hidden rounded-3xl sm:grid-cols-2"
-            style={{ border: '1px solid var(--bp-glass-border)' }}
+            style={{ border: '1px solid var(--landing-accent-15)' }}
           >
             {/* левая колонка — контакты */}
-            <div className="flex flex-col gap-5 p-8" style={{ background: 'var(--bp-glass-bg)' }}>
-              <h3 className="text-lg font-bold" style={{ color: 'var(--bp-text)' }}>Контакты</h3>
+            <div className="flex flex-col gap-5 p-8" style={{ background: 'var(--landing-surface)' }}>
+              <h3
+                className="text-lg font-bold"
+                style={{ color: 'var(--landing-text)', fontFamily: 'var(--landing-font-display)' }}
+              >
+                Контакты
+              </h3>
 
               {salon.address && (
                 <div className="flex items-start gap-3">
                   <div
                     className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
-                    style={{ background: 'var(--bp-accent-10)' }}
+                    style={{ background: 'var(--landing-accent-10)' }}
                   >
-                    <MapPin className="h-4 w-4" style={{ color: 'var(--bp-accent)' }} />
+                    <MapPin className="h-4 w-4" style={{ color: 'var(--landing-accent)' }} />
                   </div>
-                  <span className="pt-1.5 text-sm leading-relaxed" style={{ color: 'var(--bp-text)' }}>
+                  <span className="pt-1.5 text-sm leading-relaxed" style={{ color: 'var(--landing-text)' }}>
                     {salon.address}
                   </span>
                 </div>
@@ -258,11 +275,11 @@ export default function StorefrontPage({
                 <a href={`tel:${salon.phone}`} className="flex items-center gap-3 group">
                   <div
                     className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl transition"
-                    style={{ background: 'var(--bp-accent-10)' }}
+                    style={{ background: 'var(--landing-accent-10)' }}
                   >
-                    <Phone className="h-4 w-4" style={{ color: 'var(--bp-accent)' }} />
+                    <Phone className="h-4 w-4" style={{ color: 'var(--landing-accent)' }} />
                   </div>
-                  <span className="text-sm" style={{ color: 'var(--bp-text)' }}>{salon.phone}</span>
+                  <span className="text-sm" style={{ color: 'var(--landing-text)' }}>{salon.phone}</span>
                 </a>
               )}
 
@@ -278,7 +295,7 @@ export default function StorefrontPage({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition hover:opacity-80"
-                        style={{ background: 'var(--bp-accent-10)', color: 'var(--bp-accent)' }}
+                        style={{ background: 'var(--landing-accent-10)', color: 'var(--landing-accent)' }}
                       >
                         <Icon className="h-4 w-4" />
                         {cfg?.label ?? key}
@@ -291,8 +308,16 @@ export default function StorefrontPage({
 
             {/* правая колонка — часы */}
             {hasHours && (
-              <div className="flex flex-col gap-4 p-8" style={{ borderLeft: '1px solid var(--bp-glass-border)' }}>
-                <h3 className="text-lg font-bold" style={{ color: 'var(--bp-text)' }}>Часы работы</h3>
+              <div
+                className="flex flex-col gap-4 p-8"
+                style={{ borderLeft: '1px solid var(--landing-accent-15)', background: 'var(--landing-bg-alt)' }}
+              >
+                <h3
+                  className="text-lg font-bold"
+                  style={{ color: 'var(--landing-text)', fontFamily: 'var(--landing-font-display)' }}
+                >
+                  Часы работы
+                </h3>
                 <div className="flex flex-col gap-2">
                   {salon.business_hours!
                     .slice()
@@ -304,14 +329,14 @@ export default function StorefrontPage({
                           key={d.day_of_week}
                           className="flex items-center justify-between rounded-xl px-3 py-2 text-sm"
                           style={{
-                            background: isToday ? 'var(--bp-accent-10)' : 'transparent',
+                            background: isToday ? 'var(--landing-accent-10)' : 'transparent',
                             fontWeight: isToday ? 600 : 400,
                           }}
                         >
-                          <span style={{ color: isToday ? 'var(--bp-accent)' : 'var(--bp-text-dim)' }}>
+                          <span style={{ color: isToday ? 'var(--landing-accent)' : 'var(--landing-text-dim)' }}>
                             {DAY_LABELS[d.day_of_week]}
                           </span>
-                          <span style={{ color: isToday ? 'var(--bp-accent)' : 'var(--bp-text-dim)' }}>
+                          <span style={{ color: isToday ? 'var(--landing-accent)' : 'var(--landing-text-dim)' }}>
                             {d.is_day_off ? 'Выходной' : `${d.time_from}–${d.time_to}`}
                           </span>
                         </div>
@@ -323,7 +348,16 @@ export default function StorefrontPage({
           </div>
 
           <Link href={bookingHref} className="mt-8 block">
-            <Button size="lg" className="bp-submit-btn w-full rounded-full text-base sm:w-auto">
+            <Button
+              size="lg"
+              className="w-full rounded-full text-base transition-all hover:opacity-90 sm:w-auto"
+              style={{
+                background: `linear-gradient(to right, var(--landing-accent), var(--landing-accent-dark))`,
+                color: 'var(--landing-on-accent)',
+                boxShadow: '0 10px 30px var(--landing-accent-30)',
+                border: 'none',
+              }}
+            >
               <CalendarCheck className="mr-2 h-5 w-5" />
               Записаться онлайн
             </Button>
@@ -333,9 +367,24 @@ export default function StorefrontPage({
 
       {/* ── STICKY CTA (мобильный) ────────────────────────────── */}
       <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-safe-area-inset-bottom pb-4 sm:hidden">
-        <div className="rounded-2xl p-1" style={{ background: 'var(--bp-glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--bp-glass-border)' }}>
+        <div
+          className="rounded-2xl p-1"
+          style={{
+            background: 'var(--landing-surface)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid var(--landing-accent-20)',
+          }}
+        >
           <Link href={bookingHref}>
-            <Button size="lg" className="bp-submit-btn w-full rounded-xl text-base">
+            <Button
+              size="lg"
+              className="w-full rounded-xl text-base transition-all hover:opacity-90"
+              style={{
+                background: `linear-gradient(to right, var(--landing-accent), var(--landing-accent-dark))`,
+                color: 'var(--landing-on-accent)',
+                border: 'none',
+              }}
+            >
               <CalendarCheck className="mr-2 h-5 w-5" />
               Записаться онлайн
             </Button>
@@ -346,7 +395,7 @@ export default function StorefrontPage({
 
       {/* ── ЛАЙТБОКС ─────────────────────────────────────────── */}
       <Dialog open={lightboxIndex !== null} onOpenChange={(open) => !open && setLightboxIndex(null)}>
-        <DialogContent className="bp-modal max-w-4xl border-none bg-black/90 p-2 sm:p-4">
+        <DialogContent className="max-w-4xl border-none bg-black/90 p-2 sm:p-4">
           {lightboxIndex !== null && (
             <div className="relative flex items-center justify-center">
               <button

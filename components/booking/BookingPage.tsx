@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ChevronLeft, ChevronRight, Clock, User, Scissors, Moon, Sun, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, User, Scissors, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { generateTimeSlots, dayOfWeekFromDateString } from '@/lib/scheduling';
-import { useTheme } from '@/components/theme/theme-provider';
 
 type Master = {
   id: string;
@@ -74,10 +73,9 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notFoundSalon, setNotFoundSalon] = useState(false);
 
-  // Тема теперь живёт в общем ThemeProvider (components/theme/theme-provider.tsx),
-  // а не как локальный useState — так переключение синхронизировано со всем
-  // проектом (admin, master, owner), а не только с этой страницей.
-  const { theme, toggleTheme } = useTheme();
+  // Переключатель темы перенесён в Footer главной страницы лендинга —
+  // здесь, на странице бронирования, он больше не нужен и не должен
+  // плавать над контентом во время прохождения шагов записи.
 
   // Резолвится один раз через get_public_salon_by_slug. salonId нужен
   // явно при INSERT в bookings — RLS на bookings_insert теперь проверяет
@@ -489,18 +487,6 @@ export default function BookingPage({ salonSlug }: { salonSlug: string }) {
 
   return (
     <div className={`min-h-screen bp-bg pb-12 relative overflow-hidden`}>
-
-      {/* Переключатель тёмная/светлая тема */}
-      <button
-        onClick={toggleTheme}
-        aria-label="Переключить тему"
-        className="bp-theme-toggle"
-        style={{ position: 'fixed', top: 20, right: 20, zIndex: 50 }}
-      >
-        <Moon className="bp-theme-icon bp-theme-icon-moon" />
-        <span className="bp-theme-knob" />
-        <Sun className="bp-theme-icon bp-theme-icon-sun" />
-      </button>
 
       <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative">
         <div className="pt-12 pb-10">

@@ -1,217 +1,193 @@
-"use client";
+import { MapPin, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import type { SalonCard } from "@/lib/types/salon";
 
-import { Star, MapPin, Clock, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
+type Props = {
+  searchParams: {
+    name?: string
+    service?: string
+    price?: string
+    city?: string
+  }
+}
 
-const salons = [
-  {
-    id: 1,
-    name: "Beauty Studio Elite",
-    image: "https://images.unsplash.com/photo-1600948836101-f9ffda59d250?w=800&fit=crop&q=80",
-    rating: 4.9,
-    reviews: 245,
-    address: "ул. Тверская, 12",
-    priceRange: "2 000 — 5 000 ₽",
-    nextAvailable: "Сегодня, 14:00",
-    services: ["Стрижка", "Окрашивание", "Укладка"],
-    availableToday: true,
-  },
-  {
-    id: 2,
-    name: "Luxury Hair Salon",
-    image: "https://images.unsplash.com/photo-1560869713-7d0a29430803?w=800&fit=crop&q=80",
-    rating: 4.8,
-    reviews: 189,
-    address: "Невский пр., 45",
-    priceRange: "3 000 — 8 000 ₽",
-    nextAvailable: "Завтра, 10:30",
-    services: ["Стрижка", "Кератин", "SPA уход"],
-    availableToday: false,
-  },
-  {
-    id: 3,
-    name: "Spa & Beauty Center",
-    image: "https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800&fit=crop&q=80",
-    rating: 4.7,
-    reviews: 312,
-    address: "ул. Пушкина, 28",
-    priceRange: "1 500 — 4 500 ₽",
-    nextAvailable: "Сегодня, 16:30",
-    services: ["Массаж", "Уход за лицом", "Маникюр"],
-    availableToday: true,
-  },
-  {
-    id: 4,
-    name: "Nail Art Studio",
-    image: "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=800&fit=crop&q=80",
-    rating: 4.9,
-    reviews: 428,
-    address: "пр. Мира, 67",
-    priceRange: "1 200 — 3 500 ₽",
-    nextAvailable: "Сегодня, 12:00",
-    services: ["Маникюр", "Педикюр", "Наращивание"],
-    availableToday: true,
-  },
-  {
-    id: 5,
-    name: "Barbershop Premium",
-    image: "https://images.unsplash.com/photo-1610475680335-dafab5475150?w=800&fit=crop&q=80",
-    rating: 4.8,
-    reviews: 156,
-    address: "ул. Ленина, 89",
-    priceRange: "800 — 2 500 ₽",
-    nextAvailable: "Завтра, 11:00",
-    services: ["Стрижка", "Бритье", "Уход за бородой"],
-    availableToday: false,
-  },
-  {
-    id: 6,
-    name: "Makeup Studio Pro",
-    image: "https://images.unsplash.com/photo-1744095407400-aa337918bbb1?w=800&fit=crop&q=80",
-    rating: 5.0,
-    reviews: 92,
-    address: "Кутузовский пр., 15",
-    priceRange: "2 500 — 10 000 ₽",
-    nextAvailable: "Сегодня, 18:00",
-    services: ["Макияж", "Визаж", "Обучение"],
-    availableToday: true,
-  },
-];
+async function getSalons(params: Props["searchParams"]): Promise<SalonCard[]> {
+  const supabase = await createClient();
 
-export function SalonList() {
+  const priceMax = params.price ? parseInt(params.price, 10) : null;
+
+  const { data, error } = await supabase.rpc("search_salons", {
+    p_name:      params.name    || null,
+    p_service:   params.service || null,
+    p_price_max: isNaN(priceMax as number) ? null : priceMax,
+    p_city:      params.city    || null,
+  });
+
+  if (error) {
+    console.error("search_salons error:", error);
+    return [];
+  }
+
+  return data as SalonCard[];
+}
+
+function priceRange(min: number | null, max: number | null): string {
+  if (!min && !max) return "Цены уточняйте";
+  if (min === max || !max) return `от ${min?.toLocaleString("ru")} ₽`;
+  return `${min?.toLocaleString("ru")} — ${max?.toLocaleString("ru")} ₽`;
+}
+
+export async function SalonList({ searchParams }: Props) {
+  const salons = await getSalons(searchParams);
+  const hasFilters = Object.values(searchParams).some(Boolean);
+
   return (
-    <section id="salons" className="bg-[#FAF7F3] py-20 px-6">
+    <section id="salons" className="py-20 px-6" style={{ background: "var(--landing-bg)" }}>
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
           <div>
-            <motion.p
-              initial={{ opacity: 0, x: -12 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="text-[#C4A882] text-xs font-semibold tracking-[0.2em] uppercase mb-3"
+            <p
+              className="text-xs font-semibold tracking-[0.2em] uppercase mb-3"
+              style={{ color: "var(--landing-accent)" }}
             >
-              Подборка рядом
-            </motion.p>
-            <motion.h2
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
+              {hasFilters ? "Результаты поиска" : "Подборка рядом"}
+            </p>
+            <h2>
               <span
-                className="block text-[#2C1F14]"
-                style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 700 }}
+                className="block"
+                style={{ color: "var(--landing-text)", fontFamily: "var(--landing-font-display)", fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 700 }}
               >
-                Лучшие салоны
+                {hasFilters ? "Найденные салоны" : "Лучшие салоны"}
               </span>
               <span
-                className="block text-[#C4A882]"
-                style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 300, fontStyle: "italic" }}
+                className="block"
+                style={{ color: "var(--landing-accent)", fontFamily: "var(--landing-font-accent)", fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 300, fontStyle: "italic" }}
               >
-                вашего города
+                {hasFilters ? `${salons.length} результатов` : "вашего города"}
               </span>
-            </motion.h2>
+            </h2>
           </div>
-          <motion.a
+          <a
             href="#"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            whileHover={{ x: 4 }}
-            className="flex items-center gap-1.5 text-[#9E8A76] text-sm hover:text-[#C4A882] transition-colors group shrink-0"
+            className="flex items-center gap-1.5 text-sm transition-colors group shrink-0"
+            style={{ color: "var(--landing-text-faint)" }}
           >
             Весь каталог
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </motion.a>
+          </a>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {salons.map((salon, i) => (
-            <motion.div
-              key={salon.id}
-              initial={{ opacity: 0, y: 28 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
-              whileHover={{ y: -5, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } }}
-              className="group bg-white rounded-2xl border border-[#C4A882]/12 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-[#C4A882]/15 transition-shadow cursor-pointer"
+        {salons.length === 0 ? (
+          <div className="text-center py-20">
+            <p
+              className="text-2xl mb-3"
+              style={{ color: "var(--landing-accent)", fontFamily: "var(--landing-font-accent)", fontStyle: "italic" }}
             >
-              <div className="relative h-48 overflow-hidden bg-[#F3EDE3]">
-                <ImageWithFallback
-                  src={salon.image}
-                  alt={salon.name}
-                  className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700"
-                  style={{ transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)" }}
-                />
-                {/* warm overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#C4A882]/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                <div className="absolute top-3 right-3 bg-white/92 backdrop-blur-sm px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm border border-[#C4A882]/15">
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  <span className="text-[#2C1F14] font-semibold text-sm">{salon.rating}</span>
-                  <span className="text-[#9E8A76] text-xs">({salon.reviews})</span>
-                </div>
-
-                {salon.availableToday && (
-                  <div className="absolute bottom-3 left-3 bg-white/88 backdrop-blur-sm px-3 py-1 rounded-full border border-emerald-100">
-                    <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                      свободно сегодня
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-5">
-                <h3
-                  className="text-[#2C1F14] font-semibold text-base mb-3 group-hover:text-[#9A7A56] transition-colors"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
-                >
-                  {salon.name}
-                </h3>
-                <div className="space-y-1.5 mb-4">
-                  <div className="flex items-center gap-2 text-[#9E8A76]">
-                    <MapPin className="w-3.5 h-3.5 shrink-0 text-[#C4A882]/70" />
-                    <span className="text-sm">{salon.address}</span>
-                  </div>
-                  <div
-                    className="flex items-center gap-2"
-                    style={{ color: salon.availableToday ? "#16a34a" : "#9E8A76" }}
-                  >
-                    <Clock className="w-3.5 h-3.5 shrink-0" style={{ color: salon.availableToday ? "#16a34a" : "#C4A882" }} />
-                    <span className="text-sm font-medium">{salon.nextAvailable}</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {salon.services.map((s) => (
-                    <span
-                      key={s}
-                      className="text-xs bg-[#F3EDE3] text-[#6B5744] px-2.5 py-1 rounded-full border border-[#C4A882]/15 group-hover:border-[#C4A882]/30 transition-colors"
+              Ничего не найдено
+            </p>
+            <p className="text-sm" style={{ color: "var(--landing-text-faint)" }}>Попробуйте изменить параметры поиска</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {salons.map((salon) => (
+              <Link
+                key={salon.id}
+                href={`/${salon.slug}`}
+                className="group rounded-2xl overflow-hidden shadow-sm transition-all hover:-translate-y-1 duration-300 cursor-pointer"
+                style={{
+                  background: "var(--landing-surface)",
+                  border: "1px solid var(--landing-accent-12)",
+                }}
+              >
+                <div className="relative h-48 overflow-hidden" style={{ background: "var(--landing-bg-alt)" }}>
+                  {salon.photo_url || salon.cover_url ? (
+                    <img
+                      src={salon.photo_url ?? salon.cover_url!}
+                      alt={salon.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      style={{ transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)" }}
+                    />
+                  ) : (
+                    <div
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ background: `linear-gradient(to bottom right, var(--landing-bg-alt), var(--landing-accent-20))` }}
                     >
-                      {s}
-                    </span>
-                  ))}
+                      <span
+                        className="text-4xl"
+                        style={{ color: "var(--landing-accent)", fontFamily: "var(--landing-font-accent)", fontStyle: "italic" }}
+                      >
+                        {salon.name[0]}
+                      </span>
+                    </div>
+                  )}
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ background: `linear-gradient(to top, var(--landing-accent-15), transparent, transparent)` }}
+                  />
                 </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-[#C4A882]/12">
-                  <div>
-                    <div className="text-[#9E8A76] text-xs mb-0.5">Цены</div>
-                    <div className="text-[#2C1F14] font-semibold text-sm">{salon.priceRange}</div>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-gradient-to-r from-[#C4A882] to-[#9A7A56] hover:from-[#D4B898] hover:to-[#AA8A66] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm shadow-[#C4A882]/20"
+                <div className="p-5">
+                  <h3
+                    className="font-semibold text-base mb-3 transition-colors"
+                    style={{ color: "var(--landing-text)", fontFamily: "var(--landing-font-display)" }}
                   >
-                    Записаться
-                  </motion.button>
+                    {salon.name}
+                  </h3>
+
+                  <div className="space-y-1.5 mb-4">
+                    {(salon.address || salon.city) && (
+                      <div className="flex items-center gap-2" style={{ color: "var(--landing-text-faint)" }}>
+                        <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--landing-accent)", opacity: 0.7 }} />
+                        <span className="text-sm">{salon.address ?? salon.city}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {salon.categories && salon.categories.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {salon.categories.slice(0, 3).map((cat) => (
+                        <span
+                          key={cat}
+                          className="text-xs px-2.5 py-1 rounded-full transition-colors"
+                          style={{
+                            background: "var(--landing-bg-alt)",
+                            color: "var(--landing-text-dim)",
+                            border: "1px solid var(--landing-accent-15)",
+                          }}
+                        >
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div
+                    className="flex items-center justify-between pt-4"
+                    style={{ borderTop: "1px solid var(--landing-accent-12)" }}
+                  >
+                    <div>
+                      <div className="text-xs mb-0.5" style={{ color: "var(--landing-text-faint)" }}>Цены</div>
+                      <div className="font-semibold text-sm" style={{ color: "var(--landing-text)" }}>
+                        {priceRange(salon.min_price, salon.max_price)}
+                      </div>
+                    </div>
+                    <div
+                      className="px-4 py-2 rounded-lg text-sm font-semibold"
+                      style={{
+                        background: `linear-gradient(to right, var(--landing-accent), var(--landing-accent-dark))`,
+                        color: "var(--landing-on-accent)",
+                        boxShadow: "0 1px 8px var(--landing-accent-20)",
+                      }}
+                    >
+                      Записаться
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

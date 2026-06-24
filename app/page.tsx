@@ -3,14 +3,14 @@
 import "@/app/landing-theme.css";
 import { Suspense } from "react";
 
-import { Header } from "@/app/components/landing/Header";
-import { Hero } from "@/app/components/landing/Hero";
-import { Services } from "@/app/components/landing/Services";
-import { SalonList } from "@/app/components/landing/SalonList";
-import { Comparison } from "@/app/components/landing/Comparison";
-import { BusinessTeaser } from "@/app/components/landing/BusinessTeaser";
-import { FAQ } from "@/app/components/landing/FAQ";
-import { Footer } from "@/app/components/landing/Footer";
+import { Header } from "@/components/landing/Header";
+import { Hero } from "@/components/landing/Hero";
+import { Services } from "@/components/landing/Services";
+import { SalonList } from "@/components/landing/SalonList";
+import { Comparison } from "@/components/landing/Comparison";
+import { BusinessTeaser } from "@/components/landing/BusinessTeaser";
+import { FAQ } from "@/components/landing/FAQ";
+import { Footer } from "@/components/landing/Footer";
 
 export const metadata = {
   title: "Aptio — найдите салон и запишитесь онлайн",

@@ -95,6 +95,66 @@
 
   --bp-font-display: 'Fraunces', serif;
   --bp-font-body: 'Inter', system-ui, sans-serif;
+
+  /* ============================================================
+     ТЕМА ЛЕНДИНГА — кремовый + медь (Aptio brand)
+     ============================================================
+     Источник правды для главной страницы системы (Hero, Header,
+     Services, SalonList, Footer) И для публичной страницы салона
+     (StorefrontPage) — у них один визуальный язык, поэтому один
+     набор переменных.
+
+     Раньше цвета здесь были захардкожены как hex-классы Tailwind
+     (bg-[#FAF7F3], text-[#C4A882] и т.д.) прямо в JSX — из-за этого
+     тёмная тема была физически невозможна на этих компонентах:
+     класс .dark на <html> ни на что не влиял, т.к. hex не зависят
+     от переменных. Теперь все эти компоненты читают --landing-*,
+     и .dark переключает их вместе с остальным проектом через тот
+     же ThemeProvider/useTheme(), что и --bp-*.
+
+     Светлая версия ниже — это и есть дефолт лендинга (#FAF7F3 и
+     медь #C4A882), просто вынесенный в переменные без изменения
+     самих значений. Тёмная версия в .dark { } далее по файлу —
+     затемнённый вариант той же палитры (тёплый графитовый фон,
+     та же медь как акцент), а не графит+медь из --bp-*: у лендинга
+     своя тёмная тема, отдельная от темы бронирования/админки.
+     ============================================================ */
+  --landing-bg: #FAF7F3;             /* основной фон секций (Hero/Services) */
+  --landing-bg-alt: #F3EDE3;         /* чередующийся фон секций (Services/SalonList) */
+  --landing-surface: #FFFFFF;        /* карточки, search-bar */
+  --landing-surface-alt: #FDF8F3;    /* hover-фон полей/кнопок */
+
+  --landing-text: #2C1F14;           /* основной текст, заголовки */
+  --landing-text-dim: #6B5744;       /* вторичный текст */
+  --landing-text-faint: #9E8A76;     /* подписи, плейсхолдеры активные */
+  --landing-text-placeholder: #C8BAA8;
+
+  --landing-accent: #C4A882;         /* медь — фирменный акцент лендинга */
+  --landing-accent-dark: #9A7A56;    /* медь тёмная — для градиентов */
+  --landing-accent-light: #D4B898;   /* медь светлая — hover-градиенты */
+  --landing-accent-10: rgba(196, 168, 130, 0.10);
+  --landing-accent-12: rgba(196, 168, 130, 0.12);
+  --landing-accent-15: rgba(196, 168, 130, 0.15);
+  --landing-accent-20: rgba(196, 168, 130, 0.20);
+  --landing-accent-25: rgba(196, 168, 130, 0.25);
+  --landing-accent-30: rgba(196, 168, 130, 0.30);
+  --landing-accent-40: rgba(196, 168, 130, 0.40);
+
+  --landing-border: rgba(196, 168, 130, 0.15);
+  --landing-on-accent: #FFFFFF;      /* текст на медных кнопках/градиентах */
+
+  --landing-footer-bg: #2C1F14;      /* тёмно-коричневый низ (Footer) — в обеих темах одинаковый, это "земля" бренда */
+  --landing-footer-text: #F2EDE4;
+  --landing-footer-text-dim: #9E8A76;
+
+  --landing-success-bg: #ecfdf5;
+  --landing-success-text: #059669;
+  --landing-success-border: #d1fae5;
+  --landing-success-dot: #10b981;
+
+  --landing-font-display: "'Playfair Display', serif";
+  --landing-font-accent: "'Cormorant Garamond', serif";
+  --landing-font-body: "Inter, sans-serif";
 }
 
 .dark {
@@ -156,6 +216,49 @@
 
   --bp-font-display: 'Fraunces', serif;
   --bp-font-body: 'Inter', system-ui, sans-serif;
+
+  /* ---------- ТЕМА ЛЕНДИНГА — тёмная версия ----------
+     Тёплый тёмный графит вместо кремового, медь остаётся той же
+     фирменной акцентной — она единственное, что узнаваемо переходит
+     между темами. Поверхности (карточки, search-bar) на пару тонов
+     светлее фона, как в --bp-glass-bg-strong, но без блюра — лендингу
+     стекло не нужно, только плоский контраст. */
+  --landing-bg: #221a13;
+  --landing-bg-alt: #1c1610;
+  --landing-surface: #2a2018;
+  --landing-surface-alt: #332619;
+
+  --landing-text: #F5EFE6;
+  --landing-text-dim: #C9B8A4;
+  --landing-text-faint: #9C8975;
+  --landing-text-placeholder: #6B5C4C;
+
+  --landing-accent: #C4A882;
+  --landing-accent-dark: #A8895E;
+  --landing-accent-light: #D8C09A;
+  --landing-accent-10: rgba(196, 168, 130, 0.12);
+  --landing-accent-12: rgba(196, 168, 130, 0.14);
+  --landing-accent-15: rgba(196, 168, 130, 0.18);
+  --landing-accent-20: rgba(196, 168, 130, 0.24);
+  --landing-accent-25: rgba(196, 168, 130, 0.30);
+  --landing-accent-30: rgba(196, 168, 130, 0.36);
+  --landing-accent-40: rgba(196, 168, 130, 0.46);
+
+  --landing-border: rgba(196, 168, 130, 0.20);
+  --landing-on-accent: #221a13;
+
+  --landing-footer-bg: #1a130c;
+  --landing-footer-text: #F2EDE4;
+  --landing-footer-text-dim: #9E8A76;
+
+  --landing-success-bg: rgba(16, 185, 129, 0.12);
+  --landing-success-text: #34d399;
+  --landing-success-border: rgba(16, 185, 129, 0.25);
+  --landing-success-dot: #34d399;
+
+  --landing-font-display: "'Playfair Display', serif";
+  --landing-font-accent: "'Cormorant Garamond', serif";
+  --landing-font-body: "Inter, sans-serif";
 }
 
 @theme {
@@ -509,4 +612,35 @@
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ============================================================
+   LANDING — незаметный переключатель темы (Footer)
+   ============================================================
+   Маленькая иконка-кнопка, а не большой тоггл как bp-theme-toggle —
+   уместно в нижней строке футера рядом с копирайтом, не отвлекает
+   от основного дизайна лендинга.
+   ============================================================ */
+.landing-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--landing-accent-20);
+  color: var(--landing-footer-text-dim);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  flex-shrink: 0;
+}
+.landing-theme-toggle:hover {
+  color: var(--landing-accent);
+  border-color: var(--landing-accent-40);
+  background: var(--landing-accent-10);
+}
+.landing-theme-toggle svg {
+  width: 14px;
+  height: 14px;
 }
