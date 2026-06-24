@@ -1,18 +1,57 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, X } from "lucide-react";
 
-const categories = ["Маникюр", "Окрашивание", "Брови", "Массаж", "Стрижка", "Ресницы"];
+const CATEGORIES = ["Маникюр", "Окрашивание", "Брови", "Массаж", "Стрижка", "Ресницы"];
 
 export function Services() {
-  const [activeCategory, setActiveCategory] = useState("Маникюр");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [focused, setFocused] = useState<string | null>(null);
+  const [fields, setFields] = useState({
+    name:    searchParams.get("name")    ?? "",
+    service: searchParams.get("service") ?? "",
+    price:   searchParams.get("price")   ?? "",
+    city:    searchParams.get("city")    ?? "",
+  });
+
+  const hasFilters = Object.values(fields).some(Boolean);
+
+  function handleSearch() {
+    const params = new URLSearchParams();
+    if (fields.name)    params.set("name",    fields.name);
+    if (fields.service) params.set("service", fields.service);
+    if (fields.price)   params.set("price",   fields.price);
+    if (fields.city)    params.set("city",     fields.city);
+    router.push(`/?${params.toString()}#salons`);
+  }
+
+  function handleReset() {
+    setFields({ name: "", service: "", price: "", city: "" });
+    router.push("/#salons");
+  }
+
+  function handleCategory(cat: string) {
+    const next = fields.service === cat ? "" : cat;
+    setFields((f) => ({ ...f, service: next }));
+    const params = new URLSearchParams();
+    if (next) params.set("service", next);
+    router.push(`/?${params.toString()}#salons`);
+  }
+
+  const inputFields = [
+    { key: "name"    as const, label: "Название", placeholder: "Например, Glow Lab" },
+    { key: "service" as const, label: "Услуга",   placeholder: "Например, стрижка" },
+    { key: "price"   as const, label: "Цена до",  placeholder: "3000" },
+    { key: "city"    as const, label: "Город",    placeholder: "Например, Москва" },
+  ];
 
   return (
     <section id="search" className="relative bg-[#F3EDE3] py-20 px-6 overflow-hidden">
-      {/* subtle copper accent bar at top */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C4A882]/60 to-transparent" />
 
       <div className="max-w-7xl mx-auto">
@@ -55,14 +94,9 @@ export function Services() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.18 }}
-          className="bg-white rounded-2xl shadow-[0_6px_40px_rgba(196,168,130,0.18)] border border-[#C4A882]/15 flex flex-col md:flex-row overflow-hidden mb-5 ring-1 ring-transparent hover:ring-[#C4A882]/20 transition-all"
+          className="bg-white rounded-2xl shadow-[0_6px_40px_rgba(196,168,130,0.18)] border border-[#C4A882]/15 flex flex-col md:flex-row overflow-hidden mb-4 ring-1 ring-transparent hover:ring-[#C4A882]/20 transition-all"
         >
-          {[
-            { key: "name", label: "Название", placeholder: "Например, Glow Lab" },
-            { key: "service", label: "Услуга", placeholder: "Например, стрижка" },
-            { key: "price", label: "Цена", placeholder: "до 3 тыс ₽" },
-            { key: "district", label: "Район", placeholder: "Например, Центр" },
-          ].map((field, i, arr) => (
+          {inputFields.map((field, i, arr) => (
             <motion.div
               key={field.key}
               animate={{ backgroundColor: focused === field.key ? "#FDF8F3" : "#FFFFFF" }}
@@ -77,6 +111,9 @@ export function Services() {
               </div>
               <input
                 id={`field-${field.key}`}
+                value={fields[field.key]}
+                onChange={(e) => setFields((f) => ({ ...f, [field.key]: e.target.value }))}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 className="text-[#6B5744] text-sm w-full outline-none bg-transparent placeholder-[#C8BAA8] focus:text-[#2C1F14] transition-colors"
                 placeholder={field.placeholder}
                 onFocus={() => setFocused(field.key)}
@@ -84,10 +121,11 @@ export function Services() {
               />
             </motion.div>
           ))}
-          <div className="p-2.5 flex items-stretch">
+          <div className="p-2.5 flex items-stretch gap-2">
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.96 }}
+              onClick={handleSearch}
               className="bg-gradient-to-r from-[#C4A882] to-[#9A7A56] hover:from-[#D4B898] hover:to-[#AA8A66] text-white px-8 py-3.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 w-full md:w-auto justify-center shadow-md shadow-[#C4A882]/25"
             >
               <Search className="w-4 h-4" />
@@ -95,6 +133,27 @@ export function Services() {
             </motion.button>
           </div>
         </motion.div>
+
+        {/* Сброс фильтров */}
+        <AnimatePresence>
+          {hasFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: "auto", marginBottom: 12 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.22 }}
+              className="overflow-hidden"
+            >
+              <button
+                onClick={handleReset}
+                className="flex items-center gap-1.5 text-sm text-[#9E8A76] hover:text-[#6B5744] transition-colors group"
+              >
+                <X className="w-3.5 h-3.5 text-[#C4A882] group-hover:rotate-90 transition-transform duration-200" />
+                Сбросить фильтры
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Category pills */}
         <motion.div
@@ -104,7 +163,7 @@ export function Services() {
           transition={{ duration: 0.5, delay: 0.28 }}
           className="flex flex-wrap gap-2"
         >
-          {categories.map((cat, i) => (
+          {CATEGORIES.map((cat, i) => (
             <motion.button
               key={cat}
               initial={{ opacity: 0, scale: 0.9 }}
@@ -112,9 +171,9 @@ export function Services() {
               viewport={{ once: true }}
               transition={{ delay: 0.32 + i * 0.05 }}
               whileTap={{ scale: 0.94 }}
-              onClick={() => setActiveCategory(cat)}
+              onClick={() => handleCategory(cat)}
               className={`px-4 py-2 rounded-full text-sm transition-all font-medium ${
-                activeCategory === cat
+                fields.service === cat
                   ? "bg-gradient-to-r from-[#C4A882] to-[#9A7A56] text-white shadow-md shadow-[#C4A882]/25"
                   : "bg-white border border-[#C4A882]/25 text-[#6B5744] hover:border-[#C4A882] hover:text-[#9A7A56] hover:bg-[#FDF8F3]"
               }`}

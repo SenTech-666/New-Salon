@@ -1,9 +1,7 @@
-// app/master/layout.tsx
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import Link from 'next/link';
-import { Calendar } from 'lucide-react';
+import { MasterNavDesktop, MasterNavMobile } from '@/components/master/MasterNav';
 import SignOutLink from '@/components/shared/SignOutLink';
 
 export default async function MasterLayout({ children }: { children: React.ReactNode }) {
@@ -16,31 +14,29 @@ export default async function MasterLayout({ children }: { children: React.React
     .select('role')
     .eq('clerk_user_id', userId)
     .maybeSingle();
-
+    
   if (!member || member.role !== 'master') {
     redirect('/admin');
   }
+  
 
   return (
-    <div className="min-h-screen flex bg-[#faf8f5]">
-      <aside className="w-64 bg-white border-r border-slate-100 flex flex-col fixed h-full z-20">
-        <div className="px-6 py-7 border-b border-slate-100">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-widest mb-1">Кабинет мастера</p>
+    <div className="min-h-screen flex bg-background">
+      <aside className="w-64 bg-card border-r border-border flex-col fixed h-full z-20 hidden sm:flex">
+        <div className="px-6 py-7 border-b border-border">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">
+            Кабинет мастера
+          </p>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          <Link
-            href="/master"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-[#fdf7f0] hover:text-[#c9a08a] transition-all text-sm font-medium"
-          >
-            <Calendar className="w-4 h-4" />
-            Мои записи
-          </Link>
-        </nav>
-        <div className="px-3 py-4 border-t border-slate-100">
+        <MasterNavDesktop />
+        <div className="px-3 py-4 border-t border-border">
           <SignOutLink />
         </div>
       </aside>
-      <main className="ml-64 flex-1 min-h-screen">{children}</main>
+
+      <main className="flex-1 min-h-screen sm:ml-64 pb-20 sm:pb-0">{children}</main>
+
+      <MasterNavMobile />
     </div>
   );
 }

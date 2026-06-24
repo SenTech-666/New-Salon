@@ -1,44 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Aptio — Современная SaaS-платформа для бьюти-салонов
 
-## Getting Started
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ECF8E)](https://supabase.com)
+[![Clerk](https://img.shields.io/badge/Clerk-Auth-6C47FF)](https://clerk.com)
 
-First, run the development server:
+**Aptio** — это удобная и красивая платформа для онлайн-записи в салоны красоты, маникюрные студии и барбершопы.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### ✨ Основные возможности
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Красивая публичная страница салона по адресу `aptio.ru/{slug}`
+- Умная система бронирования с выбором мастера, услуги и свободных слотов
+- Личный кабинет владельца (админка) с управлением услугами, мастерами, складом и аналитикой
+- Личный кабинет мастера с расписанием
+- Мультитенантность с полной изоляцией данных
+- Тарифные планы (Starter / Pro / Business)
+- Поддержка white-label (свой домен) — в разработке
+- Современный и приятный UI/UX
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+🛠 Технологии
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Frontend: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui
+Авторизация: Clerk
+База данных: Supabase (PostgreSQL) + Row Level Security
+UI: Framer Motion, TanStack Query & Table, react-day-picker
+Платежи: ЮKassa (рекуррентные платежи)
+Email: Resend
+Деплой: Vercel
 
-## Learn More
+📁 Структура проекта
+textapp/
+├── [slug]/                 # Публичная страница салона
+├── admin/                  # Админка владельца
+├── master/                 # Кабинет мастера
+├── onboarding/             # Создание нового салона
+├── api/                    # Server Actions
+└── components/
+🎯 Для владельцев салонов
 
-To learn more about Next.js, take a look at the following resources:
+Удобная онлайн-запись 24/7
+Автоматическое управление расписанием
+Контроль склада и расходников
+Аналитика и отчёты
+Минимальная комиссия
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+📋 План развития
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+ Публичная страница салона по slug
+ Админ-панель и управление данными
+ Полноценная система бронирования (конфликты, буфер времени)
+ Рекуррентные платежи через ЮKassa
+ White-label (кастомный домен)
+ SMS и Telegram-уведомления
+ Зарплатные расчёты мастеров
+ Импорт данных из DIKIDI / YClients
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-
-
-
-
-
-
-
+📄 Лицензия
+Коммерческий продукт © 2026 Aptio
