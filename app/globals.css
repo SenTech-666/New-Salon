@@ -155,6 +155,20 @@
   --landing-font-display: "'Playfair Display', serif";
   --landing-font-accent: "'Cormorant Garamond', serif";
   --landing-font-body: "Inter, sans-serif";
+
+  /* ---------- ЛЕНДИНГ — стекло (для BookingPage на кремовом фоне) ----------
+     Аналог --bp-glass-*, но рассчитан на светлый кремовый фон вместо
+     графитового: на тёмном фоне стекло работает за счёт полупрозрачного
+     белого поверх тёмного — здесь та же идея, но границы и тень мягче,
+     иначе на светлом фоне эффект "пропадает" и превращается в обычный
+     белый блок без ощущения стекла. */
+  --landing-glass-bg: rgba(255, 255, 255, 0.55);
+  --landing-glass-bg-strong: rgba(255, 255, 255, 0.82);
+  --landing-glass-border: rgba(44, 31, 20, 0.10);
+  --landing-glass-highlight: rgba(255, 255, 255, 0.9);
+  --landing-glass-shadow: 0 12px 40px rgba(44, 31, 20, 0.10);
+  --landing-cell-bg: rgba(255, 255, 255, 0.45);
+  --landing-cell-border: rgba(44, 31, 20, 0.06);
 }
 
 .dark {
@@ -259,6 +273,18 @@
   --landing-font-display: "'Playfair Display', serif";
   --landing-font-accent: "'Cormorant Garamond', serif";
   --landing-font-body: "Inter, sans-serif";
+
+  /* ---------- ЛЕНДИНГ — стекло, тёмная тема ----------
+     Тут логика как у --bp-glass-* в .dark: полупрозрачный светлый
+     поверх тёмного фона, плотная подложка для модалки чуть темнее
+     самого фона, чтобы модалка читалась отдельным слоем. */
+  --landing-glass-bg: rgba(245, 239, 230, 0.08);
+  --landing-glass-bg-strong: rgba(26, 19, 12, 0.62);
+  --landing-glass-border: rgba(245, 239, 230, 0.14);
+  --landing-glass-highlight: rgba(255, 255, 255, 0.10);
+  --landing-glass-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+  --landing-cell-bg: rgba(245, 239, 230, 0.04);
+  --landing-cell-border: rgba(245, 239, 230, 0.08);
 }
 
 @theme {
@@ -643,4 +669,303 @@
 .landing-theme-toggle svg {
   width: 14px;
   height: 14px;
+}
+
+/* ============================================================
+   STOREFRONT — анимации входа премиальной страницы салона
+   ============================================================
+   Чистый CSS, без framer-motion: StorefrontPage и так 'use client'
+   только из-за лайтбокса, дополнительная зависимость на анимации
+   в этом файле не нужна — transition/keyframes полностью покрывают
+   тот же эффект fade+slide, что и motion.div на главной странице.
+   ============================================================ */
+
+@keyframes storefront-fade-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.storefront-fade-in {
+  animation: storefront-fade-in 0.7s cubic-bezier(.22,1,.36,1) backwards;
+}
+
+.storefront-fade-in-delayed {
+  animation: storefront-fade-in 0.8s cubic-bezier(.22,1,.36,1) 0.15s backwards;
+}
+
+@keyframes storefront-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.storefront-rise {
+  animation: storefront-rise 0.5s cubic-bezier(.22,1,.36,1) backwards;
+}
+
+@keyframes storefront-orb-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-18px) scale(1.06); }
+}
+
+.storefront-orb {
+  animation: storefront-orb-float 9s ease-in-out infinite;
+}
+
+@keyframes storefront-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.storefront-spin {
+  animation: storefront-spin 40s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storefront-fade-in,
+  .storefront-fade-in-delayed,
+  .storefront-rise,
+  .storefront-orb,
+  .storefront-spin {
+    animation: none !important;
+  }
+}
+
+/* ============================================================
+   BOOKING PAGE (НА ЛЕНДИНГ-ТЕМЕ) — стекло, ячейки календаря,
+   модалка, шаги, тосты
+   ============================================================
+   Прямой аналог блока ".bp-bg / .bp-glass / .bp-day-cell..." выше,
+   но переведён с --bp-* (графит) на --landing-* (кремовый): сама
+   BookingPage теперь использует --landing-font-display вместо
+   --bp-font-display и т.д. Логика и структура классов идентичны —
+   просто на другом источнике переменных, чтобы форма записи клиента
+   визуально продолжала Storefront, а не "переключалась" обратно на
+   графит+медь администраторской темы.
+   ============================================================ */
+
+.landing-bp-bg {
+  background: linear-gradient(135deg, var(--landing-bg), var(--landing-bg-alt));
+  font-family: var(--landing-font-body);
+  transition: background 0.4s ease;
+}
+
+.landing-glass {
+  background: var(--landing-glass-bg);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid var(--landing-glass-border);
+  box-shadow: inset 0 1px 0 var(--landing-glass-highlight), var(--landing-glass-shadow);
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+.landing-modal {
+  background: var(--landing-glass-bg-strong) !important;
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  border: 1px solid var(--landing-glass-border) !important;
+  box-shadow: inset 0 1px 0 var(--landing-glass-highlight), var(--landing-glass-shadow);
+}
+.landing-modal-header {
+  background: transparent;
+  border-bottom: 1px solid var(--landing-glass-border);
+}
+.landing-modal-close {
+  flex-shrink: 0;
+}
+
+.landing-nav-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--landing-text-dim);
+  cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
+}
+.landing-nav-btn:hover { background: var(--landing-accent-10); color: var(--landing-accent); }
+
+.landing-day-cell {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 24px;
+  background: var(--landing-cell-bg);
+  border: 1px solid var(--landing-cell-border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(.2,.85,.25,1), box-shadow 0.35s ease, border-color 0.35s ease;
+  animation: bp-rise 0.5s cubic-bezier(.2,.85,.25,1) backwards;
+}
+.landing-day-cell::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: 24px;
+  background: radial-gradient(circle at 50% 0%, transparent, transparent 70%);
+  transition: background 0.4s ease;
+  pointer-events: none;
+}
+.landing-day-cell:hover:not(:disabled)::before {
+  background: radial-gradient(circle at 50% 0%, var(--landing-accent-10), transparent 70%);
+}
+.landing-day-cell:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.04);
+  border-color: var(--landing-accent-40);
+  box-shadow: 0 10px 24px var(--landing-accent-15);
+}
+.landing-day-cell:disabled { opacity: 0.4; cursor: not-allowed; }
+.landing-day-selected {
+  border-color: var(--landing-accent) !important;
+  box-shadow: 0 0 0 2px var(--landing-accent-10), 0 10px 24px var(--landing-accent-20) !important;
+  transform: scale(1.02);
+}
+.landing-day-confirmed { border-color: var(--landing-accent) !important; }
+.landing-day-num {
+  font-family: var(--landing-font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--landing-text);
+}
+.landing-day-label {
+  display: none;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  margin-top: 4px;
+}
+@media (min-width: 640px) {
+  .landing-day-label { display: block; }
+}
+
+.landing-progress-track {
+  height: 3px;
+  background: var(--landing-glass-border);
+  width: 100%;
+  flex-shrink: 0;
+}
+.landing-progress-fill {
+  height: 100%;
+  background: var(--landing-accent);
+  transition: width 0.4s cubic-bezier(.2,.85,.25,1);
+}
+
+.landing-step-enter { animation: bp-step-in 0.32s cubic-bezier(.2,.85,.25,1) backwards; }
+
+.landing-option-card {
+  padding: 24px;
+  border-radius: 24px;
+  border: 2px solid var(--landing-glass-border);
+  background: var(--landing-glass-bg);
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(.2,.85,.25,1), border-color 0.25s ease, box-shadow 0.25s ease;
+  animation: bp-rise 0.4s cubic-bezier(.2,.85,.25,1) backwards;
+}
+.landing-option-card:hover {
+  transform: translateX(4px);
+  border-color: var(--landing-accent-40);
+  box-shadow: 0 8px 20px var(--landing-accent-12);
+}
+.landing-option-selected {
+  border-color: var(--landing-accent) !important;
+  background: var(--landing-accent-10) !important;
+}
+
+.landing-time-slot {
+  height: 64px;
+  border-radius: 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  background: var(--landing-glass-bg);
+  border: 1px solid var(--landing-glass-border);
+  color: var(--landing-text);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  animation: bp-rise 0.35s cubic-bezier(.2,.85,.25,1) backwards;
+}
+.landing-time-slot:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--landing-accent);
+}
+.landing-time-selected {
+  background: var(--landing-accent) !important;
+  border-color: var(--landing-accent) !important;
+  color: var(--landing-on-accent) !important;
+}
+.landing-time-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.landing-warning-box {
+  background: var(--landing-accent-10);
+  border: 1px solid var(--landing-accent-15);
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+}
+
+.landing-bp-input {
+  background: var(--landing-glass-bg) !important;
+  border: 1px solid var(--landing-glass-border) !important;
+  color: var(--landing-text) !important;
+}
+.landing-bp-input:focus {
+  border-color: var(--landing-accent) !important;
+}
+
+.landing-submit-btn {
+  background: var(--landing-accent);
+  color: var(--landing-on-accent);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 30px var(--landing-accent-30);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.landing-submit-btn:hover:not(:disabled) { background: var(--landing-accent-dark); }
+.landing-submit-btn:active:not(:disabled) { transform: scale(0.98); }
+.landing-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.landing-modal-scrollbar::-webkit-scrollbar { width: 6px; }
+.landing-modal-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--landing-glass-border);
+  border-radius: 999px;
+}
+
+[data-sonner-toast].landing-toast {
+  background: var(--landing-glass-bg-strong) !important;
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid var(--landing-glass-border) !important;
+  box-shadow: inset 0 1px 0 var(--landing-glass-highlight), var(--landing-glass-shadow) !important;
+  border-radius: 20px !important;
+  padding: 16px 18px !important;
+  font-family: var(--landing-font-body);
+}
+[data-sonner-toast].landing-toast [data-title] {
+  color: var(--landing-text) !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+}
+[data-sonner-toast].landing-toast [data-description] {
+  color: var(--landing-text-dim) !important;
+  font-size: 0.85rem !important;
+}
+[data-sonner-toast].landing-toast [data-icon] {
+  display: flex;
+  align-items: center;
+}
+[data-sonner-toast].landing-toast-success [data-icon] .landing-toast-icon {
+  color: var(--landing-accent);
+}
+[data-sonner-toast].landing-toast-error [data-icon] .landing-toast-icon {
+  color: #c0524a;
+}
+.landing-toast-icon { width: 20px; height: 20px; }
+[data-sonner-toast].landing-toast [data-close-button] {
+  background: var(--landing-glass-bg) !important;
+  border: 1px solid var(--landing-glass-border) !important;
+  color: var(--landing-text-dim) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-day-cell, .landing-option-card, .landing-time-slot, .landing-step-enter {
+    animation: none !important;
+    transition: none !important;
+  }
 }
