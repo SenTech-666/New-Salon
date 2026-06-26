@@ -1,11 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   CalendarCheck,
-  ChevronLeft,
-  ChevronRight,
   ShieldCheck,
   Package,
   Link2,
@@ -16,262 +14,26 @@ import {
   Check,
 } from 'lucide-react';
 import { PLAN_DISPLAY, type PlanId } from '@/lib/plans';
+import BookingDemoWidget from './booking-demo-widget';
 
-const MONTHS = [
-  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-];
-const DAY_HEADERS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+// Демо-виджет записи вынесен в отдельный самодостаточный компонент
+// (booking-demo-widget.tsx) — та же логика и стили, что у реального
+// BookingPage, просто на фиктивных данных.
 
-// ============================================================
-// ЖИВОЙ ВИДЖЕТ ЗАПИСИ — демо-данные
-// ============================================================
-// Это не статичная картинка и не упрощённый туториальный пример — те же
-// сущности (мастер → расписание → слоты → занятость), что в реальном
-// BookingPage, просто с фиктивными данными вместо Supabase, чтобы человек,
-// ещё не зарегистрировавшись, увидел настоящий интерфейс продукта, а не
-// абстрактный календарь "вообще".
-type DemoMaster = {
-  id: string;
-  name: string;
-  initial: string;
-  color: string;
-  slots: string[];
-  taken: string[];
-};
-
-const DEMO_MASTERS: DemoMaster[] = [
-  {
-    id: 'anna',
-    name: 'Анна',
-    initial: 'А',
-    color: 'var(--landing-accent)',
-    slots: ['10:00', '10:30', '12:00', '14:30', '16:00', '17:00'],
-    taken: ['10:30', '14:30'],
-  },
-  {
-    id: 'sergey',
-    name: 'Серёжа',
-    initial: 'С',
-    color: '#6B8FA8',
-    slots: ['09:00', '09:30', '11:00', '13:00', '15:30', '18:00'],
-    taken: ['09:30', '13:00'],
-  },
-  {
-    id: 'katya',
-    name: 'Катя',
-    initial: 'К',
-    color: '#8B7355',
-    slots: ['10:00', '11:30', '13:30', '15:00', '16:30', '17:30'],
-    taken: ['11:30', '16:30'],
-  },
+// Лёгкий набор для мини-превью расписания в bento-секции "Возможности" —
+// сознательно не импортируется из booking-demo-widget.tsx: там нужны полные
+// мастера со слотами/занятостью для интерактивного виджета, здесь — только
+// имя/инициал/цвет для статичной иллюстрации полосок расписания. Раздувать
+// самодостаточный виджет экспортами под нужды другой секции не стоит.
+const SCHEDULE_PREVIEW_MASTERS = [
+  { id: 'anna', initial: 'А', color: 'var(--landing-accent)' },
+  { id: 'sergey', initial: 'С', color: '#6B8FA8' },
 ];
 
-// Дни месяца, в которые у демо-мастеров "есть слоты" — для точки-индикатора
-// в ячейке календаря, как на реальном BookingPage.
-const DEMO_SLOT_DAYS = [3, 5, 8, 10, 12, 15, 17, 19, 22, 24, 26, 29];
-
-function DemoBookingWidget() {
-  const today = useMemo(() => new Date(), []);
-  const [viewDate, setViewDate] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const [selectedMasterId, setSelectedMasterId] = useState(DEMO_MASTERS[0].id);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [justBooked, setJustBooked] = useState(false);
-
-  const selectedMaster = DEMO_MASTERS.find((m) => m.id === selectedMasterId)!;
-
-  const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
-  const firstWeekday = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay();
-  const leadingOffset = firstWeekday === 0 ? 6 : firstWeekday - 1; // неделя с понедельника
-
-  const isPastMonth =
-    viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() === today.getMonth();
-
-  const handlePrevMonth = () => {
-    if (isPastMonth) return;
-    setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
-    setSelectedDay(null);
-    setSelectedSlot(null);
-  };
-
-  const handleNextMonth = () => {
-    setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
-    setSelectedDay(null);
-    setSelectedSlot(null);
-  };
-
-  const handleSelectMaster = (id: string) => {
-    setSelectedMasterId(id);
-    setSelectedSlot(null);
-  };
-
-  const handleSelectDay = (day: number) => {
-    setSelectedDay(day);
-    setSelectedSlot(null);
-  };
-
-  const handleConfirm = () => {
-    if (!selectedDay || !selectedSlot) return;
-    setJustBooked(true);
-    setTimeout(() => {
-      setJustBooked(false);
-      setSelectedDay(null);
-      setSelectedSlot(null);
-    }, 2800);
-  };
-
-  return (
-    <div
-      className="landing-glass rounded-[24px] p-6 sm:p-7"
-      style={{ maxWidth: 400, width: '100%' }}
-    >
-      <div className="flex items-center justify-between mb-5">
-        <span
-          className="text-sm"
-          style={{ fontFamily: 'var(--landing-font-display)', color: 'var(--landing-text)' }}
-        >
-          Запись к мастеру
-        </span>
-        <span
-          className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-          style={{ background: 'var(--landing-accent-12)', color: 'var(--landing-accent-dark)' }}
-        >
-          Живой виджет
-        </span>
-      </div>
-
-      {/* Выбор мастера — те же чипы, что планируются для master_pick на BookingPage */}
-      <div className="flex gap-2 mb-5 flex-wrap">
-        {DEMO_MASTERS.map((m) => (
-          <button
-            key={m.id}
-            onClick={() => handleSelectMaster(m.id)}
-            className="flex items-center gap-1.5 rounded-full pl-1.5 pr-3 py-1 transition-colors"
-            style={{
-              border: `1px solid ${selectedMasterId === m.id ? 'var(--landing-accent)' : 'var(--landing-glass-border)'}`,
-              background: selectedMasterId === m.id ? 'var(--landing-accent-10)' : 'transparent',
-            }}
-          >
-            <span
-              className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0"
-              style={{ background: m.color, color: '#fff' }}
-            >
-              {m.initial}
-            </span>
-            <span className="text-xs" style={{ color: 'var(--landing-text)' }}>{m.name}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Календарь */}
-      <div className="flex items-center justify-between mb-3">
-        <button
-          onClick={handlePrevMonth}
-          disabled={isPastMonth}
-          className="landing-nav-btn"
-          style={{ width: 30, height: 30, opacity: isPastMonth ? 0.3 : 1 }}
-          aria-label="Предыдущий месяц"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <span className="text-xs font-medium" style={{ color: 'var(--landing-text)' }}>
-          {MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}
-        </span>
-        <button onClick={handleNextMonth} className="landing-nav-btn" style={{ width: 30, height: 30 }} aria-label="Следующий месяц">
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
-
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {DAY_HEADERS.map((d) => (
-          <div key={d} className="text-center text-[10px] font-medium py-1" style={{ color: 'var(--landing-text-faint)' }}>
-            {d}
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-1 mb-5">
-        {Array.from({ length: leadingOffset }).map((_, i) => <div key={`empty-${i}`} />)}
-        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-          const cellDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
-          const isPast = cellDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-          const isToday =
-            day === today.getDate() && viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear();
-          const hasSlots = DEMO_SLOT_DAYS.includes(day);
-          const isSelected = selectedDay === day;
-
-          return (
-            <button
-              key={day}
-              disabled={isPast}
-              onClick={() => handleSelectDay(day)}
-              className="relative aspect-square rounded-lg text-xs font-medium transition-colors flex items-center justify-center"
-              style={{
-                opacity: isPast ? 0.25 : 1,
-                cursor: isPast ? 'default' : 'pointer',
-                background: isSelected ? 'var(--landing-accent)' : 'var(--landing-cell-bg)',
-                color: isSelected ? 'var(--landing-on-accent)' : isToday ? 'var(--landing-accent)' : 'var(--landing-text)',
-                fontWeight: isToday || isSelected ? 600 : 500,
-              }}
-            >
-              {day}
-              {hasSlots && !isSelected && (
-                <span
-                  className="absolute bottom-1 w-1 h-1 rounded-full"
-                  style={{ background: 'var(--landing-accent)', opacity: 0.6 }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Слоты времени */}
-      {selectedDay && (
-        <>
-          <p className="text-[11px] font-medium uppercase tracking-wide mb-2.5" style={{ color: 'var(--landing-text-faint)' }}>
-            Свободное время
-          </p>
-          <div className="grid grid-cols-4 gap-1.5 mb-4">
-            {selectedMaster.slots.map((slot) => {
-              const isTaken = selectedMaster.taken.includes(slot);
-              const isSelected = selectedSlot === slot;
-              return (
-                <button
-                  key={slot}
-                  disabled={isTaken}
-                  onClick={() => setSelectedSlot(slot)}
-                  className="rounded-lg py-2 text-xs font-medium text-center transition-transform"
-                  style={{
-                    background: isSelected ? 'var(--landing-accent)' : 'var(--landing-cell-bg)',
-                    color: isSelected ? 'var(--landing-on-accent)' : isTaken ? 'var(--landing-text-faint)' : 'var(--landing-text)',
-                    textDecoration: isTaken ? 'line-through' : 'none',
-                    opacity: isTaken ? 0.45 : 1,
-                    cursor: isTaken ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {slot}
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {selectedDay && selectedSlot && (
-        <button
-          onClick={handleConfirm}
-          className="landing-submit-btn w-full h-11 rounded-xl text-sm font-semibold"
-        >
-          {justBooked ? `✓ Записано на ${selectedSlot}` : 'Подтвердить запись'}
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ============================================================
+// Демо-виджет записи вынесен в отдельный самодостаточный компонент
+// (booking-demo-widget.tsx) — та же логика и стили, что у реального
+// BookingPage, просто на фиктивных данных. MONTHS/DAY_HEADERS выше
+// остаются здесь, т.к. используются и другими секциями этой страницы.
 // ТАБЫ "ДЛЯ КОГО"
 // ============================================================
 type AudienceId = 'salon' | 'barber' | 'free';
@@ -459,7 +221,7 @@ export default function BusinessLandingPage() {
             </div>
 
             <div className={`flex justify-center lg:justify-end ${mounted ? 'storefront-fade-in-delayed' : 'opacity-0'}`}>
-              <DemoBookingWidget />
+              <BookingDemoWidget />
             </div>
           </div>
         </div>
@@ -607,7 +369,7 @@ export default function BusinessLandingPage() {
                 реально свободные слоты.
               </p>
               <div className="rounded-xl p-4" style={{ background: 'var(--landing-bg-alt)' }}>
-                {DEMO_MASTERS.slice(0, 2).map((m) => (
+                {SCHEDULE_PREVIEW_MASTERS.map((m) => (
                   <div key={m.id} className="flex items-center gap-2.5 mb-3 last:mb-0">
                     <span
                       className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0"
